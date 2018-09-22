@@ -48,8 +48,8 @@ libzimbuild : lzma z icubuild xapian
 	cp libzim/build/src/libzim.so libzimbuild/lib
 	cp -ar libzim/include libzimbuild/
 
-demo_file_api.js: libzimbuild demo_file_api.cpp prejs_file_api.js postjs_file_api.js
-	em++ demo_file_api.cpp libzimbuild/lib/libzim.so -Ilibzimbuild/include -fdiagnostics-color=always -pipe -Wall -Winvalid-pch -Wnon-virtual-dtor -Werror -std=c++11 -O0 -g -D_LARGEFILE64_SOURCE=1 -D_FILE_OFFSET_BITS=64 -pthread --pre-js prejs_file_api.js --post-js postjs_file_api.js -s DISABLE_EXCEPTION_CATCHING=0 -s "EXTRA_EXPORTED_RUNTIME_METHODS=['ALLOC_NORMAL','printErr','ALLOC_STACK','ALLOC_STATIC','ALLOC_DYNAMIC','ALLOC_NONE']" -s DEMANGLE_SUPPORT=1 -s ALLOW_MEMORY_GROWTH=1
+demo_file_api.js: libzimbuild demo_file_api.cpp my_glue_wrapper.cpp prejs_file_api.js postjs_file_api.js glue.js
+	em++ demo_file_api.cpp libzimbuild/lib/libzim.so -Ilibzimbuild/include -fdiagnostics-color=always -pipe -Wall -Winvalid-pch -Wnon-virtual-dtor -Werror -std=c++11 -O0 -g -D_LARGEFILE64_SOURCE=1 -D_FILE_OFFSET_BITS=64 -pthread --pre-js prejs_file_api.js --post-js postjs_file_api.js --post-js glue.js -s DISABLE_EXCEPTION_CATCHING=0 -s "EXTRA_EXPORTED_RUNTIME_METHODS=['ALLOC_NORMAL','printErr','ALLOC_STACK','ALLOC_STATIC','ALLOC_DYNAMIC','ALLOC_NONE']" -s DEMANGLE_SUPPORT=1 -s ALLOW_MEMORY_GROWTH=1
 
 clean_dependencies :
 	rm -rf lzma z icubuild xapian

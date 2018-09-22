@@ -14,9 +14,13 @@
             // When the control has changed, there are new files
             files = control.files;
             console.log("new files selected");
-            worker.postMessage(files);
+            worker.postMessage({action: "init", files: files});
             },false);
+        function callC() {
+            worker.postMessage({action: "callC", files: files});
+        }
       </script>
+      <button type="button" onclick="callC()">Test javascript to C++ call</button>
       </body>
       </html>
 

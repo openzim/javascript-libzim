@@ -1,0 +1,4 @@
+interface File {
+        void File(ByteString filename);
+        ByteString getArticleByUrl(ByteString url);
+};
