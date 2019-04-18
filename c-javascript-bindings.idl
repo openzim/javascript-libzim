@@ -1,0 +1,11 @@
+[Prefix="kiwix::"]
+interface Entry {
+    void Entry();
+};
+[Prefix="kiwix::"]
+interface Reader {
+    void Reader();
+    long getArticleCount();
+    Entry getEntryFromPath(DOMString url);
+};
+

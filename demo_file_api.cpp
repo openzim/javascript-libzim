@@ -3,9 +3,6 @@
 #include <reader.h>
 #include <iostream>
 #include <chrono>
-#include <emscripten/bind.h>
-
-using namespace emscripten;
 
 int main(int argc, char* argv[])
 {
@@ -67,18 +64,4 @@ kiwix::Reader getReader(std::string filename) {
 
 kiwix::Entry getEntryFromPath(kiwix::Reader reader, std::string url){
     return reader.getEntryFromPath(url);
-}
-
-// Binding code
-EMSCRIPTEN_BINDINGS(kiwix_module) {
-    emscripten::function("getArticleContentByUrl", &getArticleContentByUrl);
-    emscripten::function("getArticleCount", &getArticleCount);
-    emscripten::function("getReader", &getReader);
-    emscripten::function("getArticleCountFromReader", &getArticleCountFromReader);
-    emscripten::function("getEntryFromPath", &getEntryFromPath);
-    emscripten::class_<kiwix::Reader>("Reader")
-    .constructor<std::string>()
-    .function("getArticleCount", &kiwix::Reader::getArticleCount)
-    .function("getEntryFromPath", &kiwix::Reader::getEntryFromPath)
-    ;
 }
