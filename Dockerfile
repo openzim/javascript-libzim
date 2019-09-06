@@ -1,4 +1,4 @@
-FROM trzeci/emscripten:sdk-tag-1.38.43-64bit
+FROM trzeci/emscripten:sdk-tag-1.38.35-64bit
 
 # Install build tools
 RUN apt update && apt install -y wget ninja-build meson pkg-config python3 autopoint libtool autoconf patch g++ locales curl git
