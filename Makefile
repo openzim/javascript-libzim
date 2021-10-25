@@ -80,35 +80,35 @@ mustachebuild :
 	cp Mustache-3.2.1/mustache mustachebuild/lib
 
 kiwixlibbuild : libzimbuild pugixmlbuild mustachebuild curlbuild
-	wget ---no-check-certificate O kiwix-lib-4.0.1.tar.gz https://github.com/kiwix/kiwix-lib/archive/4.0.1.tar.gz
-	tar xf kiwix-lib-4.0.1.tar.gz
-	cd kiwix-lib-4.0.1 ; patch -p1 <../patch_kiwixlib_for_emscripten.patch
+	wget --no-check-certificate -O libkiwix-4.0.1.tar.gz https://github.com/kiwix/kiwix-lib/archive/4.0.1.tar.gz
+	tar xf libkiwix-4.0.1.tar.gz
+	cd libkiwix-4.0.1 ; patch -p1 <../patch_kiwixlib_for_emscripten.patch
 	# Quick and dirty way to avoid that meson checks some dependencies
-	sed -i -e 's/^libzim_dep = .*//g' kiwix-lib-4.0.1/meson.build
-	sed -i -e 's/, libzim_dep//g' kiwix-lib-4.0.1/meson.build
-	sed -i -e 's/^pugixml_dep = .*//g' kiwix-lib-4.0.1/meson.build
-	sed -i -e 's/, pugixml_dep//g' kiwix-lib-4.0.1/meson.build
-	sed -i -e "s/error('Cannot found header mustache.hpp')//g" kiwix-lib-4.0.1/meson.build
-	cd kiwix-lib-4.0.1; meson . build
+	sed -i -e 's/^libzim_dep = .*//g' libkiwix-4.0.1/meson.build
+	sed -i -e 's/, libzim_dep//g' libkiwix-4.0.1/meson.build
+	sed -i -e 's/^pugixml_dep = .*//g' libkiwix-4.0.1/meson.build
+	sed -i -e 's/, pugixml_dep//g' libkiwix-4.0.1/meson.build
+	sed -i -e "s/error('Cannot found header mustache.hpp')//g" libkiwix-4.0.1/meson.build
+	cd libkiwix-4.0.1; meson . build
 	# Quick and dirty way to tell ninja to compile with emscripten,
 	# with the dependencies compiled above,
 	# and to remove unnecessary compilation steps
-	sed -i -e 's/ c++ / em++ /g' kiwix-lib-4.0.1/build/build.ninja
-	sed -i -e 's/ cc / emcc /g' kiwix-lib-4.0.1/build/build.ninja
-	sed -i -e 's#\(build all: phony \).*\(src/libkiwix.so......\).*#\1\2#' kiwix-lib-4.0.1/build/build.ninja
+	sed -i -e 's/ c++ / em++ /g' libkiwix-4.0.1/build/build.ninja
+	sed -i -e 's/ cc / emcc /g' libkiwix-4.0.1/build/build.ninja
+	sed -i -e 's#\(build all: phony \).*\(src/libkiwix.so......\).*#\1\2#' libkiwix-4.0.1/build/build.ninja
 	# Depending on the environment, the parameters can be surrounded by quotes or not
-	sed -i -e "s/'-Iinclude'/'-Iinclude' '-Istatic' '-I..\/..\/libzimbuild\/include' '-I..\/..\/pugixmlbuild\/include' '-I..\/..\/icubuild\/include' '-I..\/..\/mustachebuild\/include' '-I..\/..\/curlbuild\/include'/g" kiwix-lib-4.0.1/build/build.ninja
-	sed -i -e "s/ -Iinclude / -Iinclude -Istatic -I..\/..\/libzimbuild\/include -I..\/..\/pugixmlbuild\/include -I..\/..\/icubuild\/include -I..\/..\/mustachebuild\/include -I..\/..\/curlbuild\/include /g" kiwix-lib-4.0.1/build/build.ninja
-	sed -i -e "s/ '-I\/usr\/include\/x86_64-linux-gnu'//g" kiwix-lib-4.0.1/build/build.ninja
-	sed -i -e "s/ -I\/usr\/include\/x86_64-linux-gnu //g" kiwix-lib-4.0.1/build/build.ninja
-	sed -i -e 's/'-Wnon-virtual-dtor'//g' kiwix-lib-4.0.1/build/build.ninja
-	sed -i -e 's/-Wnon-virtual-dtor//g' kiwix-lib-4.0.1/build/build.ninja
-	sed -i -e 's/^\( LINK_ARGS =.*\)/\1 -L..\/..\/libzimbuild\/lib -L..\/..\/pugixmlbuild\/lib -L..\/..\/icubuild\/lib/g' kiwix-lib-4.0.1/build/build.ninja
-	sed -i -e 's/^\(build all: phony src\/libkiwix.so.4.0.1\).*/\1/g' kiwix-lib-4.0.1/build/build.ninja
-	cd kiwix-lib-4.0.1; ninja -C build
+	sed -i -e "s/'-Iinclude'/'-Iinclude' '-Istatic' '-I..\/..\/libzimbuild\/include' '-I..\/..\/pugixmlbuild\/include' '-I..\/..\/icubuild\/include' '-I..\/..\/mustachebuild\/include' '-I..\/..\/curlbuild\/include'/g" libkiwix-4.0.1/build/build.ninja
+	sed -i -e "s/ -Iinclude / -Iinclude -Istatic -I..\/..\/libzimbuild\/include -I..\/..\/pugixmlbuild\/include -I..\/..\/icubuild\/include -I..\/..\/mustachebuild\/include -I..\/..\/curlbuild\/include /g" libkiwix-4.0.1/build/build.ninja
+	sed -i -e "s/ '-I\/usr\/include\/x86_64-linux-gnu'//g" libkiwix-4.0.1/build/build.ninja
+	sed -i -e "s/ -I\/usr\/include\/x86_64-linux-gnu //g" libkiwix-4.0.1/build/build.ninja
+	sed -i -e 's/'-Wnon-virtual-dtor'//g' libkiwix-4.0.1/build/build.ninja
+	sed -i -e 's/-Wnon-virtual-dtor//g' libkiwix-4.0.1/build/build.ninja
+	sed -i -e 's/^\( LINK_ARGS =.*\)/\1 -L..\/..\/libzimbuild\/lib -L..\/..\/pugixmlbuild\/lib -L..\/..\/icubuild\/lib/g' libkiwix-4.0.1/build/build.ninja
+	sed -i -e 's/^\(build all: phony src\/libkiwix.so.4.0.1\).*/\1/g' libkiwix-4.0.1/build/build.ninja
+	cd libkiwix-4.0.1; ninja -C build
 	mkdir -p kiwixlibbuild/lib kiwixlibbuild/include
-	cp kiwix-lib-4.0.1/build/src/libkiwix.so kiwixlibbuild/lib
-	cp -ar kiwix-lib-4.0.1/include kiwixlibbuild/
+	cp libkiwix-4.0.1/build/src/libkiwix.so kiwixlibbuild/lib
+	cp -ar libkiwix-4.0.1/include kiwixlibbuild/
 
 demo_file_api.js: kiwixlibbuild demo_file_api.cpp prejs_file_api.js postjs_file_api.js
 	em++ --bind demo_file_api.cpp libzimbuild/lib/libzim.so kiwixlibbuild/lib/libkiwix.so -Ilibzimbuild/include -Ikiwixlibbuild/include -Iicubuild/include -fdiagnostics-color=always -pipe -Wall -Winvalid-pch -Wnon-virtual-dtor -Werror -std=c++11 -O0 -g -D_LARGEFILE64_SOURCE=1 -D_FILE_OFFSET_BITS=64 -pthread --pre-js prejs_file_api.js --post-js postjs_file_api.js -s DISABLE_EXCEPTION_CATCHING=0 -s "EXTRA_EXPORTED_RUNTIME_METHODS=['ALLOC_NORMAL','printErr','ALLOC_STACK','ALLOC_STATIC','ALLOC_DYNAMIC','ALLOC_NONE','print']" -s DEMANGLE_SUPPORT=1 -s TOTAL_MEMORY=83886080
@@ -127,8 +127,8 @@ clean_libzim :
 	rm -rf libzim-4.0.5 libzimbuild
 	rm -rf libzim-4.0.5.tar.gz
 clean_kiwixlib :
-	rm -rf kiwix-lib-4.0.1 kiwixlibbuild
-	rm -rf kiwix-lib-4.0.1.tar.gz
+	rm -rf libkiwix-4.0.1 kiwixlibbuild
+	rm -rf libkiwix-4.0.1.tar.gz
 clean_demo :
 	rm a.out.*
 clean : clean_dependencies clean_libzim clean_kiwixlib clean_demo
