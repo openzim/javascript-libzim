@@ -18,7 +18,9 @@
 /aria2-*.tar.gz
 /kiwix-lib*/
 /kiwixlib*/
+/libkiwix*/
 /kiwix-lib-*.tar.gz
+/libkiwix-*.tar.gz
 /curl*/
 /curl-*.tar.gz
 /Mustach*/
