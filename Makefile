@@ -1,6 +1,6 @@
 all: demo_file_api.js
 lzma : 
-	wget https://tukaani.org/xz/xz-5.2.4.tar.gz
+	wget --no-check-certificate https://tukaani.org/xz/xz-5.2.4.tar.gz
 	tar xf xz-5.2.4.tar.gz
 	cd xz-5.2.4 ; ./autogen.sh
 	cd xz-5.2.4 ; emconfigure ./configure --prefix=`pwd`/../lzma
@@ -8,14 +8,14 @@ lzma :
 	cd xz-5.2.4 ; emmake make install
 	
 z : 
-	wget http://zlib.net/zlib-1.2.11.tar.gz
+	wget --no-check-certificate http://zlib.net/zlib-1.2.11.tar.gz
 	tar xf zlib-1.2.11.tar.gz
 	cd zlib-1.2.11 ; emconfigure ./configure --prefix=`pwd`/../z
 	cd zlib-1.2.11 ; emmake make 
 	cd zlib-1.2.11 ; emmake make install
 	
 icubuild : 
-	wget https://github.com/unicode-org/icu/releases/download/release-63-2/icu4c-63_2-src.tgz
+	wget --no-check-certificate https://github.com/unicode-org/icu/releases/download/release-63-2/icu4c-63_2-src.tgz
 	tar xf icu4c-63_2-src.tgz
 	# Quick and dirty way to make ICU handle Double-conversion, and to skip unnecessary compilation steps
 	cd icu ; patch -p1 <../patch_icu_for_emscripten.patch
@@ -24,14 +24,14 @@ icubuild :
 	cd icu/source ; emmake make install
 
 xapian : z
-	wget https://oligarchy.co.uk/xapian/1.4.10/xapian-core-1.4.10.tar.xz
+	wget --no-check-certificate https://oligarchy.co.uk/xapian/1.4.10/xapian-core-1.4.10.tar.xz
 	tar xf xapian-core-1.4.10.tar.xz
 	cd xapian-core-1.4.10; emconfigure ./configure --prefix=`pwd`/../xapian "CFLAGS=-I`pwd`/../z/include -L`pwd`/../z/lib" "CXXFLAGS=-I`pwd`/../z/include -L`pwd`/../z/lib" --disable-backend-remote
 	cd xapian-core-1.4.10; emmake make "CFLAGS=-I`pwd`/../z/include -L`pwd`/../z/lib -std=c++11" "CXXFLAGS=-I`pwd`/../z/include -L`pwd`/../z/lib -std=c++11"
 	cd xapian-core-1.4.10; emmake make install
 
 libzimbuild : lzma z icubuild xapian
-	wget -O libzim-4.0.5.tar.gz https://github.com/openzim/libzim/archive/4.0.5.tar.gz
+	wget --no-check-certificate -O libzim-4.0.5.tar.gz https://github.com/openzim/libzim/archive/4.0.5.tar.gz
 	tar xf libzim-4.0.5.tar.gz
 	cd libzim-4.0.5; meson . build
 	# Quick and dirty way to tell ninja to compile with emscripten,
@@ -52,7 +52,7 @@ libzimbuild : lzma z icubuild xapian
 	cp -ar libzim-4.0.5/include libzimbuild/
 
 pugixmlbuild :
-	wget -O pugixml-1.9.tar.gz https://github.com/zeux/pugixml/archive/v1.9.tar.gz
+	wget --no-check-certificate -O pugixml-1.9.tar.gz https://github.com/zeux/pugixml/archive/v1.9.tar.gz
 	tar xf pugixml-1.9.tar.gz
 	sed -i -e 's/^BUILD=build.*/BUILD=build\/make-emscripten/' pugixml-1.9/Makefile
 	cd pugixml-1.9; emmake make build/make-emscripten/src/pugixml.cpp.o
@@ -62,7 +62,7 @@ pugixmlbuild :
 	cp pugixml-1.9/src/pugiconfig.hpp pugixmlbuild/include
 
 curlbuild :
-	wget -O curl-7_64_0.tar.gz https://github.com/curl/curl/archive/curl-7_64_0.tar.gz
+	wget --no-check-certificate -O curl-7_64_0.tar.gz https://github.com/curl/curl/archive/curl-7_64_0.tar.gz
 	tar xf curl-7_64_0.tar.gz
 	cd curl-curl-7_64_0; ./buildconf
 	cd curl-curl-7_64_0; emconfigure ./configure --prefix=`pwd`/../curlbuild
@@ -70,7 +70,7 @@ curlbuild :
 	cd curl-curl-7_64_0; emmake make install
 
 mustachebuild :
-	wget -O mustache-3.2.1.tar.gz https://github.com/kainjow/Mustache/archive/v3.2.1.tar.gz
+	wget --no-check-certificate -O mustache-3.2.1.tar.gz https://github.com/kainjow/Mustache/archive/v3.2.1.tar.gz
 	tar xf mustache-3.2.1.tar.gz
 	sed -i -e 's/g++ /em++ /g' Mustache-3.2.1/Makefile
 	sed -i -e 's/.\/mustache//g' Mustache-3.2.1/Makefile
@@ -80,7 +80,7 @@ mustachebuild :
 	cp Mustache-3.2.1/mustache mustachebuild/lib
 
 kiwixlibbuild : libzimbuild pugixmlbuild mustachebuild curlbuild
-	wget -O kiwix-lib-4.0.1.tar.gz https://github.com/kiwix/kiwix-lib/archive/4.0.1.tar.gz
+	wget ---no-check-certificate O kiwix-lib-4.0.1.tar.gz https://github.com/kiwix/kiwix-lib/archive/4.0.1.tar.gz
 	tar xf kiwix-lib-4.0.1.tar.gz
 	cd kiwix-lib-4.0.1 ; patch -p1 <../patch_kiwixlib_for_emscripten.patch
 	# Quick and dirty way to avoid that meson checks some dependencies
