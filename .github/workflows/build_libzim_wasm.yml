@@ -1,0 +1,25 @@
+name: Docker Image CI
+
+on:
+  # push:
+  #   branches: [ "master" ]
+  # pull_request:
+  #   branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build -t "docker-emscripten-libzim:v3" ./docker
+    - name: Compile the libzim WASM
+      run: docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) -it docker-emscripten-libzim:v3 make
+    - name: Publish the WASM to draft release
+      run: |
+        echo 'If the run was successful, we will build a publish action here, to publish:'
+        ls -l a.out.*
