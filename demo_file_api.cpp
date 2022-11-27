@@ -95,7 +95,7 @@ std::unique_ptr<EntryWrapper> getEntryByPath(std::string url) {
 }
 
 // Search for a text, and returns the path of the first result
-std::vector<EntryWrapper> search(std::string text, std::int numResults) {
+std::vector<EntryWrapper> search(std::string text, int numResults) {
     auto searcher = zim::Searcher(*g_archive);
     auto query = zim::Query(text);
     auto search = searcher.search(query);
