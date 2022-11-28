@@ -3,7 +3,7 @@ build/lib/liblzma.so :
 	wget -N https://tukaani.org/xz/xz-5.2.4.tar.gz
 	tar xf xz-5.2.4.tar.gz
 	cd xz-5.2.4 ; ./autogen.sh
-	cd xz-5.2.4 ; emconfigure ./configure --prefix=`pwd`/../build
+	cd xz-5.2.4 ; emconfigure ./configure --prefix=`pwd`/../build --disable-pthreads
 	cd xz-5.2.4 ; emmake make 
 	cd xz-5.2.4 ; emmake make install
 	
@@ -26,7 +26,7 @@ build/lib/libicudata.so :
 	tar xf icu4c-69_1-src.tgz
 	# It's no use trying to compile examples
 	sed -i -e 's/^SUBDIRS =\(.*\)$$(DATASUBDIR) $$(EXTRA) $$(SAMPLE) $$(TEST)\(.*\)/SUBDIRS =\1\2/' icu/source/Makefile.in
-	cd icu/source ; emconfigure ./configure --prefix=`pwd`/../../build
+	cd icu/source ; emconfigure ./configure --prefix=`pwd`/../../build --disable-pthreads
 	cd icu/source ; emmake make 
 	cd icu/source ; emmake make install
 
@@ -34,8 +34,8 @@ build/lib/libxapian.a : build/lib/libz.a
 	wget -N https://oligarchy.co.uk/xapian/1.4.18/xapian-core-1.4.18.tar.xz
 	tar xf xapian-core-1.4.18.tar.xz
         # Some options coming from https://github.com/xapian/xapian/tree/master/xapian-core/emscripten
-	#cd xapian-core-1.4.18; emconfigure ./configure --prefix=`pwd`/../build "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" CPPFLAGS='-DFLINTLOCK_USE_FLOCK' CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti' --disable-backend-honey --disable-backend-inmemory --disable-shared --disable-backend-remote
-	cd xapian-core-1.4.18; emconfigure ./configure --prefix=`pwd`/../build "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" --disable-shared --disable-backend-remote
+	# cd xapian-core-1.4.18; emconfigure ./configure --prefix=`pwd`/../build "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" CPPFLAGS='-DFLINTLOCK_USE_FLOCK' CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti' --disable-backend-honey --disable-backend-inmemory --disable-shared --disable-backend-remote
+	cd xapian-core-1.4.18; emconfigure ./configure --prefix=`pwd`/../build "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" --disable-shared --disable-backend-remote --disable-pthreads
 	cd xapian-core-1.4.18; emmake make "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib -std=c++11" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib -std=c++11"
 	cd xapian-core-1.4.18; emmake make install
 
@@ -62,6 +62,5 @@ clean :
 	rm -rf icu*
 	rm -rf libzim-*
 	rm -rf build
-	rm a.out.*
 
 .PHONY : all clean
