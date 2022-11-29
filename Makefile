@@ -1,9 +1,9 @@
-all: demo_file_api.js big_file_demo.js
+all: libzim-wasm.js libzim-asm.js 
 build/lib/liblzma.so : 
 	wget -N https://tukaani.org/xz/xz-5.2.4.tar.gz
 	tar xf xz-5.2.4.tar.gz
 	cd xz-5.2.4 ; ./autogen.sh
-	cd xz-5.2.4 ; emconfigure ./configure --prefix=`pwd`/../build
+	cd xz-5.2.4 ; emconfigure ./configure --prefix=`pwd`/../build --disable-pthreads
 	cd xz-5.2.4 ; emmake make 
 	cd xz-5.2.4 ; emmake make install
 	
@@ -26,7 +26,7 @@ build/lib/libicudata.so :
 	tar xf icu4c-69_1-src.tgz
 	# It's no use trying to compile examples
 	sed -i -e 's/^SUBDIRS =\(.*\)$$(DATASUBDIR) $$(EXTRA) $$(SAMPLE) $$(TEST)\(.*\)/SUBDIRS =\1\2/' icu/source/Makefile.in
-	cd icu/source ; emconfigure ./configure --prefix=`pwd`/../../build
+	cd icu/source ; emconfigure ./configure --prefix=`pwd`/../../build --disable-pthreads
 	cd icu/source ; emmake make 
 	cd icu/source ; emmake make install
 
@@ -34,8 +34,8 @@ build/lib/libxapian.a : build/lib/libz.a
 	wget -N https://oligarchy.co.uk/xapian/1.4.18/xapian-core-1.4.18.tar.xz
 	tar xf xapian-core-1.4.18.tar.xz
         # Some options coming from https://github.com/xapian/xapian/tree/master/xapian-core/emscripten
-	#cd xapian-core-1.4.18; emconfigure ./configure --prefix=`pwd`/../build "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" CPPFLAGS='-DFLINTLOCK_USE_FLOCK' CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti' --disable-backend-honey --disable-backend-inmemory --disable-shared --disable-backend-remote
-	cd xapian-core-1.4.18; emconfigure ./configure --prefix=`pwd`/../build "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" --disable-shared --disable-backend-remote
+	# cd xapian-core-1.4.18; emconfigure ./configure --prefix=`pwd`/../build "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" CPPFLAGS='-DFLINTLOCK_USE_FLOCK' CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti' --disable-backend-honey --disable-backend-inmemory --disable-shared --disable-backend-remote
+	cd xapian-core-1.4.18; emconfigure ./configure --prefix=`pwd`/../build "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" --disable-shared --disable-backend-remote --disable-pthreads
 	cd xapian-core-1.4.18; emmake make "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib -std=c++11" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib -std=c++11"
 	cd xapian-core-1.4.18; emmake make install
 
@@ -48,11 +48,11 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	cd libzim-7.2.2; ninja -C build
 	cd libzim-7.2.2; ninja -C build install
 
-demo_file_api.js: build/lib/libzim.a demo_file_api.cpp prejs_file_api.js postjs_file_api.js
-	em++ --bind demo_file_api.cpp -I/src/build/include -L/src/build/lib -lzim -llzma -lzstd -lxapian -lz -licui18n -licuuc -licudata -lpthread -lm -fdiagnostics-color=always -pipe -Wall -Winvalid-pch -Wnon-virtual-dtor -Werror -std=c++11 -O0 -g --pre-js prejs_file_api.js --post-js postjs_file_api.js -s DISABLE_EXCEPTION_CATCHING=0 -s "EXPORTED_RUNTIME_METHODS=['ALLOC_NORMAL','printErr','ALLOC_STACK','print']" -s DEMANGLE_SUPPORT=1 -s TOTAL_MEMORY=83886080 -s ALLOW_MEMORY_GROWTH=1 -lworkerfs.js
+libzim-wasm.js: build/lib/libzim.a libzim_bindings.cpp prejs_file_api.js postjs_file_api.js
+	em++ -o libzim-wasm.js --bind libzim_bindings.cpp -I/src/build/include -L/src/build/lib -lzim -llzma -lzstd -lxapian -lz -licui18n -licuuc -licudata -lm -fdiagnostics-color=always -pipe -Wall -Winvalid-pch -Wnon-virtual-dtor -std=c++11 -O2 --pre-js prejs_file_api.js --post-js postjs_file_api.js -s WASM=1 -s DISABLE_EXCEPTION_CATCHING=0 -s "EXPORTED_RUNTIME_METHODS=['ALLOC_NORMAL','printErr','ALLOC_STACK','print']" -s DEMANGLE_SUPPORT=1 -s TOTAL_MEMORY=83886080 -s ALLOW_MEMORY_GROWTH=1 -lworkerfs.js
 
-big_file_demo.js:
-	em++ --bind -std=c++11 -O0 --pre-js prejs_file_api_testbigfile.js --post-js postjs_file_api_testbigfile.js big_file_test.cpp -lworkerfs.js -o bigfile.js
+libzim-asm.js: build/lib/libzim.a libzim_bindings.cpp prejs_file_api.js postjs_file_api.js
+	em++ -o libzim-asm.js --bind libzim_bindings.cpp -I/src/build/include -L/src/build/lib -lzim -llzma -lzstd -lxapian -lz -licui18n -licuuc -licudata -lm -fdiagnostics-color=always -pipe -Wall -Winvalid-pch -Wnon-virtual-dtor -std=c++11 -O2 --pre-js prejs_file_api.js --post-js postjs_file_api.js -mno-atomics --memory-init-file 0 -s WASM=0 -s DISABLE_EXCEPTION_CATCHING=0 -s MIN_IE_VERSION=11 -s "EXPORTED_RUNTIME_METHODS=['ALLOC_NORMAL','printErr','ALLOC_STACK','print']" -s DEMANGLE_SUPPORT=1 -s USE_PTHREADS=0 -s TOTAL_MEMORY=83886080 -s ALLOW_MEMORY_GROWTH=1 -lworkerfs.js
 
 clean :
 	rm -rf xz-*
@@ -62,6 +62,5 @@ clean :
 	rm -rf icu*
 	rm -rf libzim-*
 	rm -rf build
-	rm a.out.*
 
 .PHONY : all clean
