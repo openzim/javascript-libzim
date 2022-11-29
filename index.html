@@ -12,7 +12,7 @@
         ZIM file(s) : <input type="file" id="your-files" multiple>
       <br/>
       <script>
-        var worker = new Worker("a.out.js");
+        var worker = new Worker("libzim-wasm.js");
         var control = document.getElementById("your-files");
         control.addEventListener("change", function(event) {
             // When the control has changed, there are new files

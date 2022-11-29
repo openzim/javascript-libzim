@@ -26,5 +26,5 @@ jobs:
       with:
         name: libzim-wasm-artefacts
         path: |
-          a.out.*
-          bigfile.*
+          libzim-wasm.*
+          libzim-asm.*
