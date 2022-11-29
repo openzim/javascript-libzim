@@ -1,5 +1,5 @@
 # Docker image suitable to build libzim & kiwixlib with emscripten
-FROM emscripten/emsdk:3.1.12
+FROM emscripten/emsdk:3.1.26
 
 # Install build tools
 RUN apt-get update && apt-get install -y wget ninja-build pkg-config python3 autopoint libtool autoconf patch g++ locales curl git \
