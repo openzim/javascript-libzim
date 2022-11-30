@@ -7,29 +7,42 @@ name: Build and publish release artefacts (Docker)
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
-  release:
-    types: [ draft ]
+    tags:
+    - 'v*' # Push events matching v*, i.e. v1.0, v20.15.10
+  # pull_request:
+  #   branches: [ master ]
   workflow_dispatch:
+    inputs:
+      version:
+        description: |
+          If you wish to create a draft release, set the tag version, like v9.9.9 (must not be an exisitng tag).
+          If left blank or incorrect format, archives will be archived instead of being uploaded to Releases.
+        required: false
+        default: ''
 
+# Define top-level environment vars we can refer to below
+env:
+  VERSION: ${{ github.ref_name }}
+  DISPATCH_VERSION: ${{ github.event.inputs.version }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}    
+      
 jobs:
-
   build:
+    name: Build and publish W/ASM artefacts 
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     # Customizes the Emscripten docker container via the Dockerfile in this repo
     - name: Build the Docker image
       run: docker build -t "docker-emscripten-libzim:v3" ./docker
-    # Creates the ASM and WASM artefacts, and the JS wrappers, using the Makefile in this rep
+    # Creates the ASM and WASM artefacts, and the JS wrappers, using the Makefile in this repo
     - name: Compile the libzim WASM artefacts
       run: docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make
     - name: List files in top-level directory
       run: ls -l
     # If we are not creating a release, archive the artefacts under this Action run
     - name: Archive build artefacts
-      if: github.event_name != 'release'
+      if:  github.event_name == 'pull_request' || github.event_name == 'push' && ! startsWith(github.ref_name, 'v') || ! startsWith(github.event.inputs.version, 'v')
       uses: actions/upload-artifact@v3
       with:
         name: libzim-wasm-artefacts
@@ -38,29 +51,39 @@ jobs:
           libzim-asm.*
     # Otherwise, zip the artefacts into respective packages (asm and wasm)
     - name: Zip the artefacts for release
-      if: github.event_name == 'release'
+      if: github.event_name == 'push' && startsWith(github.ref_name, 'v') || startsWith(github.event.inputs.version, 'v')
       run: |
-        zip libzim-wasm.zip libzim-wasm.*
-        zip libzim-asm.zip libzim-asm.*
+        if [[ ! $VERSION =~ ^v?[0-9.]+ ]]; then
+          VERSION=$DISPATCH_VERSION
+        fi
+        zip libzim-wasm_$VERSION.zip libzim-wasm.*
+        zip libzim-asm_$VERSION.zip libzim-asm.*
+    # Create a draft release
+    - name: Create draft release
+      if: startsWith(env.VERSION, 'v')
+      id: create_release
+      uses: actions/create-release@v1
+      with:
+        tag_name: ${{ env.VERSION }}
+        release_name: Release ${{ env.VERSION }}
+        body: 'TODO'
+        draft: true
+        prerelease: false 
     # Publish the artefacts to the GitHub draft release
     - name: Publish zipped WASM artefacts to GitHub release
-      if: github.event_name == 'release'
+      if: startsWith(env.VERSION, 'v')
       uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ github.event.release.upload_url }} 
+        upload_url: ${{ steps.create_release.outputs.upload_url }} 
         asset_path: ./
-        asset_name: libzim-wasm.zip
+        asset_name: libzim-wasm${{ env.VERSION }}.zip
         asset_content_type: application/zip
     - name: Publish zipped ASM artefacts to GitHub release
-      if: github.event_name == 'release'
+      if: startsWith(env.VERSION, 'v')
       uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ github.event.release.upload_url }} 
+        upload_url: ${{ steps.create_release.outputs.upload_url }} 
         asset_path: ./
-        asset_name: libzim-asm.zip
+        asset_name: libzim-asm${{ env.VERSION }}.zip
         asset_content_type: application/zip
     # TODO: Publish artefacts to master.download.kiwix.org/release
