@@ -1,30 +1,66 @@
-name: Docker Image CI
+# Workflow to build and publish the libzim ASM and WASM arttefacts together with the JavaScript wrapper.
+# If this workflow is triggered by the creation of a draft release, then the artefacts are uploaded to the release assets.
+# If it is triggered by a push or pull request to master, or manually, then the artefacts are archived under the corresponding Action.
+
+name: Build and publish release artefacts (Docker)
 
 on:
-  # push:
-  #   branches: [ "master" ]
-  # pull_request:
-  #   branches: [ "master" ]
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  release:
+    types: [ draft ]
   workflow_dispatch:
 
 jobs:
 
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
+    # Customizes the Emscripten docker container via the Dockerfile in this repo
     - name: Build the Docker image
       run: docker build -t "docker-emscripten-libzim:v3" ./docker
+    # Creates the ASM and WASM artefacts, and the JS wrappers, using the Makefile in this rep
     - name: Compile the libzim WASM artefacts
       run: docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make
     - name: List files in top-level directory
       run: ls -l
+    # If we are not creating a release, archive the artefacts under this Action run
     - name: Archive build artefacts
+      if: github.event_name != 'release'
       uses: actions/upload-artifact@v3
       with:
         name: libzim-wasm-artefacts
         path: |
           libzim-wasm.*
           libzim-asm.*
+    # Otherwise, zip the artefacts into respective packages (asm and wasm)
+    - name: Zip the artefacts for release
+      if: github.event_name == 'release'
+      run: |
+        zip libzim-wasm.zip libzim-wasm.*
+        zip libzim-asm.zip libzim-asm.*
+    # Publish the artefacts to the GitHub draft release
+    - name: Publish zipped WASM artefacts to GitHub release
+      if: github.event_name == 'release'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }} 
+        asset_path: ./
+        asset_name: libzim-wasm.zip
+        asset_content_type: application/zip
+    - name: Publish zipped ASM artefacts to GitHub release
+      if: github.event_name == 'release'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }} 
+        asset_path: ./
+        asset_name: libzim-asm.zip
+        asset_content_type: application/zip
+    # TODO: Publish artefacts to master.download.kiwix.org/release
