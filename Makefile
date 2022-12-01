@@ -1,6 +1,7 @@
 all: libzim-wasm.js libzim-asm.js 
 build/lib/liblzma.so : 
-	[ ! -f xz-*.tar.gz ] && wget -N https://tukaani.org/xz/xz-5.2.4.tar.gz || true
+	# Origin: https://tukaani.org/xz/xz-5.2.4.tar.gz
+	[ ! -f xz-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/xz-5.2.4.tar.gz || true
 	tar xf xz-5.2.4.tar.gz
 	cd xz-5.2.4 ; ./autogen.sh
 	cd xz-5.2.4 ; emconfigure ./configure --prefix=`pwd`/../build
