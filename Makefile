@@ -1,4 +1,4 @@
-all: libzim-wasm.js libzim-asm.js 
+all: libzim-wasm.js libzim-asm.js test_large_file_access.js
 build/lib/liblzma.so : 
 	# Origin: https://tukaani.org/xz/xz-5.2.4.tar.gz
 	[ ! -f xz-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/xz-5.2.4.tar.gz || true
@@ -53,10 +53,10 @@ libzim-wasm.js: build/lib/libzim.a libzim_bindings.cpp prejs_file_api.js postjs_
 	em++ -o libzim-wasm.js --bind libzim_bindings.cpp -I/src/build/include -L/src/build/lib -lzim -llzma -lzstd -lxapian -lz -licui18n -licuuc -licudata -lm -fdiagnostics-color=always -pipe -Wall -Winvalid-pch -Wnon-virtual-dtor -std=c++11 -O0 --pre-js prejs_file_api.js --post-js postjs_file_api.js -s WASM=1 -s DISABLE_EXCEPTION_CATCHING=0 -s "EXPORTED_RUNTIME_METHODS=['ALLOC_NORMAL','printErr','ALLOC_STACK','print']" -s DEMANGLE_SUPPORT=1 -s TOTAL_MEMORY=83886080 -s ALLOW_MEMORY_GROWTH=1 -lworkerfs.js
 
 libzim-asm.js: build/lib/libzim.a libzim_bindings.cpp prejs_file_api.js postjs_file_api.js
-	em++ -o libzim-asm.js --bind libzim_bindings.cpp -I/src/build/include -L/src/build/lib -lzim -llzma -lzstd -lxapian -lz -licui18n -licuuc -licudata -lm -fdiagnostics-color=always -pipe -Wall -Winvalid-pch -Wnon-virtual-dtor -std=c++11 -O0 --pre-js prejs_file_api.js --post-js postjs_file_api.js --memory-init-file 0 -s WASM=0 -s DISABLE_EXCEPTION_CATCHING=0 -s MIN_IE_VERSION=11 -s "EXPORTED_RUNTIME_METHODS=['ALLOC_NORMAL','printErr','ALLOC_STACK','print']" -s DEMANGLE_SUPPORT=1 -s TOTAL_MEMORY=83886080 -s ALLOW_MEMORY_GROWTH=1 -lworkerfs.js
+	em++ -o libzim-asm.js --bind libzim_bindings.cpp -I/src/build/include -L/src/build/lib -lzim -llzma -lzstd -lxapian -lz -licui18n -licuuc -licudata -lm -fdiagnostics-color=always -pipe -Wall -Winvalid-pch -Wnon-virtual-dtor -std=c++11 -O0 --pre-js prejs_file_api.js --post-js postjs_file_api.js --memory-init-file 0 -s WASM=0 -s DISABLE_EXCEPTION_CATCHING=0 -s "EXPORTED_RUNTIME_METHODS=['ALLOC_NORMAL','printErr','ALLOC_STACK','print']" -s DEMANGLE_SUPPORT=1 -s TOTAL_MEMORY=83886080 -s ALLOW_MEMORY_GROWTH=1 -lworkerfs.js
 
-# big_file_demo.js:
-# 	em++ --bind -std=c++11 -O0 --pre-js prejs_file_api_testbigfile.js --post-js postjs_file_api_testbigfile.js big_file_test.cpp -lworkerfs.js -o bigfile.js
+test_large_file_access.js:
+	em++ -o test_large_file_access.js --bind test_file_bindings.cpp -std=c++11 -O0 --pre-js prejs_test_file_access.js --post-js postjs_test_file_access.js -lworkerfs.js
 
 clean :
 	rm -rf xz-*

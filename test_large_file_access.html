@@ -1,8 +1,8 @@
 <!doctype html>
 <html>
-    <head><meta charset="utf-8"><title>Big file Webassembly test-case</title></head>
+    <head><meta charset="utf-8"><title>Large File Access Webassembly test case</title></head>
     <body>
-        <h1>Test-case for file size limits with WebAssembly</h1>
+        <h1>Test case for file size limits with WebAssembly</h1>
         Choose a big local file, and open your browser console to see the result.
         <br/>
         <br/>
@@ -13,7 +13,7 @@
         <pre>fallocate -l 5G examplefile</pre>
         <br/>
         <script>
-            var worker = new Worker("bigfile.js");
+            var worker = new Worker("test_large_file_access.js");
             var control = document.getElementById("your-files");
             control.addEventListener("change", function (event) {
                 // When the control has changed, there is a new file
