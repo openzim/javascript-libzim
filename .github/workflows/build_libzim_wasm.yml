@@ -33,11 +33,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     # Customizes the Emscripten docker container via the Dockerfile in this repo
-    - name: Build the Docker image
-      run: docker build -t "docker-emscripten-libzim:v3" ./docker
+    # - name: Build the Docker image
+    #   run: docker build -t "docker-emscripten-libzim:v3" ./docker
     # Creates the ASM and WASM artefacts, and the JS wrappers, using the Makefile in this repo
-    - name: Compile the libzim WASM artefacts
-      run: docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make
+    # - name: Compile the libzim WASM artefacts
+    #   run: docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make
     - name: List files in top-level directory
       run: ls -l
     # If we are not creating a release, archive the artefacts under this Action run
@@ -76,7 +76,7 @@ jobs:
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }} 
         asset_path: ./
-        asset_name: libzim-wasm${{ env.VERSION }}.zip
+        asset_name: libzim-wasm_${{ env.VERSION }}.zip
         asset_content_type: application/zip
     - name: Publish zipped ASM artefacts to GitHub release
       if: startsWith(env.VERSION, 'v')
@@ -84,6 +84,6 @@ jobs:
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }} 
         asset_path: ./
-        asset_name: libzim-asm${{ env.VERSION }}.zip
+        asset_name: libzim-asm_${{ env.VERSION }}.zip
         asset_content_type: application/zip
     # TODO: Publish artefacts to master.download.kiwix.org/release
