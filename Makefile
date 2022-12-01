@@ -1,4 +1,5 @@
 all: libzim-wasm.js libzim-asm.js test_large_file_access.js
+
 build/lib/liblzma.so : 
 	# Origin: https://tukaani.org/xz/xz-5.2.4.tar.gz
 	[ ! -f xz-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/xz-5.2.4.tar.gz || true
