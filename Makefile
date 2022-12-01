@@ -55,7 +55,7 @@ libzim-wasm.js: build/lib/libzim.a libzim_bindings.cpp prejs_file_api.js postjs_
 libzim-asm.js: build/lib/libzim.a libzim_bindings.cpp prejs_file_api.js postjs_file_api.js
 	em++ -o libzim-asm.js --bind libzim_bindings.cpp -I/src/build/include -L/src/build/lib -lzim -llzma -lzstd -lxapian -lz -licui18n -licuuc -licudata -lm -fdiagnostics-color=always -pipe -Wall -Winvalid-pch -Wnon-virtual-dtor -std=c++11 -O0 --pre-js prejs_file_api.js --post-js postjs_file_api.js --memory-init-file 0 -s WASM=0 -s DISABLE_EXCEPTION_CATCHING=0 -s "EXPORTED_RUNTIME_METHODS=['ALLOC_NORMAL','printErr','ALLOC_STACK','print']" -s DEMANGLE_SUPPORT=1 -s TOTAL_MEMORY=83886080 -s ALLOW_MEMORY_GROWTH=1 -lworkerfs.js
 
-test_large_file_access.js:
+test_large_file_access.js: test_file_bindings.cpp prejs_test_file_access.js postjs_test_file_access.js
 	em++ -o test_large_file_access.js --bind test_file_bindings.cpp -std=c++11 -O0 --pre-js prejs_test_file_access.js --post-js postjs_test_file_access.js -lworkerfs.js
 
 clean :
