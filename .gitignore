@@ -1,12 +1,10 @@
 /nbproject/private/
 /build/
-/xz-*/
 /zlib-*/
 /zstd-*/
 /icu/
 /xapian*/
 /libzim*/
-/xz-*.tar.gz
 /zlib-*.tar.gz
 /zstd-*.tar.gz
 /icu4c-*.tgz
