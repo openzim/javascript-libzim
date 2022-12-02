@@ -49,8 +49,8 @@ jobs:
         path: |
           libzim-wasm.*
           libzim-asm.*
-    # Otherwise, zip the artefacts into respective packages (asm and wasm)
-    - name: Zip the artefacts for release
+    # Otherwise, zip the artefacts into respective packages (asm and wasm) and create release
+    - name: Zip the artefacts and create draft release
       if: github.event_name == 'push' && startsWith(github.ref_name, 'v') || startsWith(github.event.inputs.version, 'v')
       run: |
         if [[ ! $VERSION =~ ^v?[0-9.]+ ]]; then
@@ -58,17 +58,12 @@ jobs:
         fi
         zip libzim-wasm_$VERSION.zip libzim-wasm.*
         zip libzim-asm_$VERSION.zip libzim-asm.*
-    # Create a draft release
-    - name: Create draft release
-      if: startsWith(env.VERSION, 'v')
-      id: create_release
-      uses: actions/create-release@v1
-      with:
-        tag_name: ${{ env.VERSION }}
-        release_name: Release ${{ env.VERSION }}
-        body: 'TODO'
-        draft: true
-        prerelease: false 
+        curl \
+          -X POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer $GITHUB_TOKEN" \
+            https://api.github.com/repos/openzim/javascript-libzim/releases \
+          -d '{"tag_name":"$VERSION","target_commitish":"master","name":"$VERSION","body":"TODO","draft":true,"prerelease":false,"generate_release_notes":true}'
     # Publish the artefacts to the GitHub draft release
     - name: Publish zipped WASM artefacts to GitHub release
       if: startsWith(env.VERSION, 'v')
