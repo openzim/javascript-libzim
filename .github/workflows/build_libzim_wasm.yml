@@ -66,7 +66,7 @@ jobs:
             -H "Authorization: Bearer $GITHUB_TOKEN" \
               https://api.github.com/repos/openzim/javascript-libzim/releases \
             -d '{"tag_name":"$VERSION","target_commitish":"master","name":"$VERSION","body":"","draft":true,"prerelease":false,"generate_release_notes":true}' \
-          | jq -r '.[].upload_url')  
+          | jq -r '.upload_url')  
     # Publish the artefacts to the GitHub draft release
     - name: Publish zipped WASM artefacts to GitHub release
       if: startsWith(env.VERSION, 'v')
