@@ -74,7 +74,7 @@ jobs:
       if: startsWith(env.VERSION, 'v')
       uses: actions/upload-release-asset@v1
       with:
-        upload_url: ${{ steps.zip_release.outputs.UPLOAD_URL }}
+        upload_url: ${{ steps.zip-release.outputs.UPLOAD_URL }}
         asset_path: ./
         asset_name: libzim-wasm_${{ env.VERSION }}.zip
         asset_content_type: application/zip
