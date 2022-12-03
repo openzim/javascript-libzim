@@ -55,6 +55,6 @@ jobs:
       if: github.event_name == 'push' && startsWith(github.ref_name, 'v') || startsWith(github.event.inputs.version, 'v')
       run: |
         # Create a draft release and upload zipped artefacts as release assets
-        chmod +x ./create_draft_release.sh
-        ./create_draft_release
+        chmod +x ./scripts/create_draft_release.sh
+        ./scripts/create_draft_release
     # TODO: Publish artefacts to master.download.kiwix.org/release
