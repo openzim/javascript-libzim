@@ -91,21 +91,4 @@ jobs:
             -T "$FILE" \
             "$UPLOAD_URL?name=$FILE"
         done
-    # Publish the artefacts to the GitHub draft release
-    # - name: Publish zipped WASM artefacts to GitHub release
-    #   if: startsWith(env.VERSION, 'v')
-    #   uses: actions/upload-release-asset@v1
-    #   with:
-    #     upload_url: ${{ steps.zip-release.outputs.UPLOAD_URL }}
-    #     asset_path: ./libzim-wasm_${{ env.VERSION }}.zip
-    #     asset_name: libzim-wasm_${{ env.VERSION }}.zip
-    #     asset_content_type: application/zip
-    # - name: Publish zipped ASM artefacts to GitHub release
-    #   if: startsWith(env.VERSION, 'v')
-    #   uses: actions/upload-release-asset@v1
-    #   with:
-    #     upload_url: ${{ steps.zip-release.outputs.UPLOAD_URL }} 
-    #     asset_path: ./libzim-asm_${{ env.VERSION }}.zip
-    #     asset_name: libzim-asm_${{ env.VERSION }}.zip
-    #     asset_content_type: application/zip
     # TODO: Publish artefacts to master.download.kiwix.org/release
