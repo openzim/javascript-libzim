@@ -72,7 +72,7 @@ jobs:
         echo "Draft release created, files will be uploaded to: $REST_RESPONSE"
         # echo "UPLOAD_URL=$REST_RESPONSE" >> $GITHUB_OUTPUT # Use this if you need to access the URL in a later step with steps.zip-release.outputs.UPLOAD_URL
         # Upload archives to the draft release
-        UPLOAD_URL=$(sed 's/^\{\?name.+}$//' <<<"$REST_RESPONSE")
+        UPLOAD_URL=$(sed -E 's/\{.+\}$//' <<<"$REST_RESPONSE")
         for FILE in "libzim-wasm_$VERSION.zip" "libzim-asm_$VERSION.zip"
         do
           echo "Uploading $FILE..."
