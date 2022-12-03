@@ -79,6 +79,7 @@ jobs:
           curl \
             -X POST \
             -H "Accept: application/vnd.github+json" \
+            -H "Content-Type: application/zip"
             -H "Authorization: Bearer $GITHUB_TOKEN" \
             $UPLOAD_URL?name=$FILE
         done
