@@ -3,12 +3,9 @@
 # This script packages the ASM and WASM artefacts, and creates a draft release
 # It is designed to be run by a GitHub action. To test, from the commandline, supply $VERSION and $GITHUB_TOKEN.
 
-if [[ ! $VERSION =~ ^v?[0-9.]+ ]]; then
-  VERSION=$DISPATCH_VERSION
-fi
 echo "Zipping the release archives..."
-zip libzim-wasm_$VERSION.zip libzim-wasm.*
-zip libzim-asm_$VERSION.zip libzim-asm.*
+zip libzim_wasm_$VERSION.zip libzim-wasm.*
+zip libzim_asm_$VERSION.zip libzim-asm.*
 echo "Creating the draft release..."
 REST_RESPONSE=$(
   curl \
@@ -29,7 +26,7 @@ else
 fi
 # echo "UPLOAD_URL=$REST_RESPONSE" >> $GITHUB_OUTPUT # Use this if you need to access the URL in a later step with steps.zip-release.outputs.UPLOAD_URL
 # Upload archives to the draft release
-for FILE in "libzim-wasm_$VERSION.zip" "libzim-asm_$VERSION.zip"
+for FILE in "libzim_wasm_$VERSION.zip" "libzim_asm_$VERSION.zip"
 do
   echo -e "\nUploading $FILE to $UPLOAD_URL?name=$FILE..."
   curl \

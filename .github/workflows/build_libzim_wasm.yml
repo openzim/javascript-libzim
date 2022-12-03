@@ -8,7 +8,7 @@ on:
   push:
     branches: [ master ]
     tags:
-    - 'v*' # Push events matching v*, i.e. v1.0, v20.15.10
+    - 'v*' # Tag push events matching v*, i.e. v1.0, v20.15.10
   # pull_request:
   #   branches: [ master ]
   workflow_dispatch:
@@ -29,6 +29,7 @@ env:
 jobs:
   build:
     name: Build and publish W/ASM artefacts 
+    if: github.even_name != 'release' 
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -42,7 +43,9 @@ jobs:
       run: ls -l
     # If we are not creating a release, archive the artefacts under this Action run
     - name: Archive build artefacts
-      if:  github.event_name == 'pull_request' || github.event_name == 'push' && ! startsWith(github.ref_name, 'v') || ! startsWith(github.event.inputs.version, 'v')
+      if: |
+        github.event_name == 'pull_request' || github.event_name == 'push' && ! startsWith(github.ref_name, 'v')
+        || ! startsWith(github.event.inputs.version, 'v')
       uses: actions/upload-artifact@v3
       with:
         name: libzim-wasm-artefacts
@@ -54,7 +57,9 @@ jobs:
       id: zip-release
       if: github.event_name == 'push' && startsWith(github.ref_name, 'v') || startsWith(github.event.inputs.version, 'v')
       run: |
+        if [[ ! $VERSION =~ ^v?[0-9.]+ ]]; then
+          VERSION=$DISPATCH_VERSION
+        fi
         # Create a draft release and upload zipped artefacts as release assets
         chmod +x ./scripts/create_draft_release.sh
         ./scripts/create_draft_release.sh
-    # TODO: Publish artefacts to master.download.kiwix.org/release
