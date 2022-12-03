@@ -66,7 +66,7 @@ jobs:
             -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
-              https://api.github.com/repos/openzim/javascript-libzim/releases \
+            https://api.github.com/repos/openzim/javascript-libzim/releases \
             -d "{\"tag_name\":\"$VERSION\",\"target_commitish\":\"master\",\"name\":\"Release $VERSION\",\"body\":\"\",\"draft\":true,\"prerelease\":false,\"generate_release_notes\":true}"
         )
         echo $REST_RESPONSE
@@ -82,13 +82,13 @@ jobs:
         # Upload archives to the draft release
         for FILE in "libzim-wasm_$VERSION.zip" "libzim-asm_$VERSION.zip"
         do
-          echo -e "\nUploading $FILE..."
+          echo -e "\nUploading $FILE to $UPLOAD_URL?name=$FILE..."
           curl \
             -X POST \
             -H "Accept: application/vnd.github+json" \
-            -H "Content-Type: application/zip"
+            -H "Content-Type: application/zip" \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
-            $UPLOAD_URL?name=$FILE
+            "$UPLOAD_URL?name=$FILE"
         done
     # Publish the artefacts to the GitHub draft release
     # - name: Publish zipped WASM artefacts to GitHub release
