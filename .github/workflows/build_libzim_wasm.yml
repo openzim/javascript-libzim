@@ -9,8 +9,8 @@ on:
     branches: [ master ]
     tags:
     - 'v*' # Tag push events matching v*, i.e. v1.0, v20.15.10
-  # pull_request:
-  #   branches: [ master ]
+  pull_request:
+    branches: [ master ]
   workflow_dispatch:
     inputs:
       version:
@@ -29,16 +29,15 @@ env:
 jobs:
   build:
     name: Build and publish W/ASM artefacts 
-    if: github.even_name != 'release' 
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     # Customizes the Emscripten docker container via the Dockerfile in this repo
-    # - name: Build the Docker image
-    #   run: docker build -t "docker-emscripten-libzim:v3" ./docker
+    - name: Build the Docker image
+      run: docker build -t "docker-emscripten-libzim:v3" ./docker
     # Creates the ASM and WASM artefacts, and the JS wrappers, using the Makefile in this repo
-    # - name: Compile the libzim WASM artefacts
-    #   run: docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make
+    - name: Compile the libzim WASM artefacts
+      run: docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make
     - name: List files in top-level directory
       run: ls -l
     # If we are not creating a release, archive the artefacts under this Action run
