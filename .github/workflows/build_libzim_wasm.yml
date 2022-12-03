@@ -67,9 +67,11 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
               https://api.github.com/repos/openzim/javascript-libzim/releases \
-            -d "{tag_name:$VERSION,target_commitish:master,name:\"Release $VERSION\",body:,draft:true,prerelease:false,generate_release_notes:true}" \
-          | jq -r '.upload_url')
-        echo "Draft release created, files will be uploaded to: $REST_RESPONSE"
+            -d "{tag_name:$VERSION,target_commitish:master,name:\"Release $VERSION\",body:,draft:true,prerelease:false,generate_release_notes:true}"
+        )
+        echo $REST_RESPONSE
+        UPLOAD_URL=$(echo $REST_RESPONSE | jq -r '.upload_url')
+        echo "Draft release created, files will be uploaded to: $UPLOAD_URL"
         # echo "UPLOAD_URL=$REST_RESPONSE" >> $GITHUB_OUTPUT # Use this if you need to access the URL in a later step with steps.zip-release.outputs.UPLOAD_URL
         # Upload archives to the draft release
         UPLOAD_URL=$(sed -E 's/\{.+\}$//' <<<"$REST_RESPONSE")
