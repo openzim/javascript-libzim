@@ -56,5 +56,5 @@ jobs:
       run: |
         # Create a draft release and upload zipped artefacts as release assets
         chmod +x ./scripts/create_draft_release.sh
-        ./scripts/create_draft_release
+        ./scripts/create_draft_release.sh
     # TODO: Publish artefacts to master.download.kiwix.org/release
