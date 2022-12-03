@@ -67,7 +67,7 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
               https://api.github.com/repos/openzim/javascript-libzim/releases \
-            -d '{"tag_name":"$VERSION","target_commitish":"master","name":"$VERSION","body":"","draft":true,"prerelease":false,"generate_release_notes":true}' \
+            -d '{"tag_name":"'"$VERSION"',"target_commitish":"master","name":"Release '"$VERSION"',"body":"","draft":true,"prerelease":false,"generate_release_notes":true}' \
           | jq -r '.upload_url')
         echo "Draft release created, files will be uploaded to: $REST_RESPONSE"
         # echo "UPLOAD_URL=$REST_RESPONSE" >> $GITHUB_OUTPUT # Use this if you need to access the URL in a later step with steps.zip-release.outputs.UPLOAD_URL
@@ -75,7 +75,7 @@ jobs:
         UPLOAD_URL=$(sed -E 's/\{.+\}$//' <<<"$REST_RESPONSE")
         for FILE in "libzim-wasm_$VERSION.zip" "libzim-asm_$VERSION.zip"
         do
-          echo "Uploading $FILE..."
+          echo -e "\nUploading $FILE..."
           curl \
             -X POST \
             -H "Accept: application/vnd.github+json" \
