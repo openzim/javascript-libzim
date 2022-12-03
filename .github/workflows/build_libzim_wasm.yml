@@ -49,7 +49,7 @@ jobs:
         path: |
           libzim-wasm.*
           libzim-asm.*
-    # Otherwise, zip the artefacts into respective packages (asm and wasm) and create release
+    # Otherwise, zip the artefacts into respective packages (asm and wasm), create and upload releases
     - name: Zip the artefacts and create draft release
       id: zip-release
       if: github.event_name == 'push' && startsWith(github.ref_name, 'v') || startsWith(github.event.inputs.version, 'v')
@@ -57,8 +57,10 @@ jobs:
         if [[ ! $VERSION =~ ^v?[0-9.]+ ]]; then
           VERSION=$DISPATCH_VERSION
         fi
+        echo "Zipping the release archives..."
         zip libzim-wasm_$VERSION.zip libzim-wasm.*
         zip libzim-asm_$VERSION.zip libzim-asm.*
+        echo "Creating the draft release..."
         REST_RESPONSE=$(
           curl \
             -X POST \
@@ -67,23 +69,34 @@ jobs:
               https://api.github.com/repos/openzim/javascript-libzim/releases \
             -d '{"tag_name":"$VERSION","target_commitish":"master","name":"$VERSION","body":"","draft":true,"prerelease":false,"generate_release_notes":true}' \
           | jq -r '.upload_url')
-        echo $REST_RESPONSE
-        echo "UPLOAD_URL=$REST_RESPONSE" >> $GITHUB_OUTPUT  
+        echo "Draft release created, files will be uploaded to: $REST_RESPONSE"
+        # echo "UPLOAD_URL=$REST_RESPONSE" >> $GITHUB_OUTPUT # Use this if you need to access the URL in a later step with steps.zip-release.outputs.UPLOAD_URL
+        # Upload archives to the draft release
+        UPLOAD_URL=$(sed 's/^\{\?name.+}$//' <<<"$REST_RESPONSE")
+        for FILE in "libzim-wasm_$VERSION.zip" "libzim-asm_$VERSION.zip"
+        do
+          echo "Uploading $FILE..."
+          curl \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            $UPLOAD_URL?name=$FILE
+        done
     # Publish the artefacts to the GitHub draft release
-    - name: Publish zipped WASM artefacts to GitHub release
-      if: startsWith(env.VERSION, 'v')
-      uses: actions/upload-release-asset@v1
-      with:
-        upload_url: ${{ steps.zip-release.outputs.UPLOAD_URL }}
-        asset_path: ./libzim-wasm_${{ env.VERSION }}.zip
-        asset_name: libzim-wasm_${{ env.VERSION }}.zip
-        asset_content_type: application/zip
-    - name: Publish zipped ASM artefacts to GitHub release
-      if: startsWith(env.VERSION, 'v')
-      uses: actions/upload-release-asset@v1
-      with:
-        upload_url: ${{ steps.zip-release.outputs.UPLOAD_URL }} 
-        asset_path: ./libzim-asm_${{ env.VERSION }}.zip
-        asset_name: libzim-asm_${{ env.VERSION }}.zip
-        asset_content_type: application/zip
+    # - name: Publish zipped WASM artefacts to GitHub release
+    #   if: startsWith(env.VERSION, 'v')
+    #   uses: actions/upload-release-asset@v1
+    #   with:
+    #     upload_url: ${{ steps.zip-release.outputs.UPLOAD_URL }}
+    #     asset_path: ./libzim-wasm_${{ env.VERSION }}.zip
+    #     asset_name: libzim-wasm_${{ env.VERSION }}.zip
+    #     asset_content_type: application/zip
+    # - name: Publish zipped ASM artefacts to GitHub release
+    #   if: startsWith(env.VERSION, 'v')
+    #   uses: actions/upload-release-asset@v1
+    #   with:
+    #     upload_url: ${{ steps.zip-release.outputs.UPLOAD_URL }} 
+    #     asset_path: ./libzim-asm_${{ env.VERSION }}.zip
+    #     asset_name: libzim-asm_${{ env.VERSION }}.zip
+    #     asset_content_type: application/zip
     # TODO: Publish artefacts to master.download.kiwix.org/release
