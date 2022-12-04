@@ -15,36 +15,36 @@ on:
       required: true
       default: 'v'
   
-  # Define top-level environment vars we can refer to below
-  env:
-    REPOSITORY: ${{ github.repository }}
-    RELEASE: ${{ github.event.release }}
-    VERSION: ${{ github.event.release.tag_name }}
-    DISPATCH_VERSION: ${{ github.event.inputs.version }}
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    SSH_KEY: ${{ secrets.SSH_KEY }}
+# Define top-level environment vars we can refer to below
+env:
+  REPOSITORY: ${{ github.repository }}
+  RELEASE: ${{ github.event.release }}
+  VERSION: ${{ github.event.release.tag_name }}
+  DISPATCH_VERSION: ${{ github.event.inputs.version }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  SSH_KEY: ${{ secrets.SSH_KEY }}
 
-  jobs:
-    upload:
-    name: Upload assets to server
-    runs-on: windows-latest
-    steps:
-    # Check out the repository
-    - uses: actions/checkout@v3
-    - name: Find the release, get assets, and upload
-      run: |
-        $repository = $Env:REPOSITORY
-        $release = $Env:RELEASE
-        $version = $Env:VERSION
-        if (! $version) { $version = $Env:DISPATCH_VERSION }
-        if (! $version) {
-          Write-Host "`n** You must set a tag version so that we can find and upload the assets! **`n" -ForegroundColor Red
-          exit 1
-        }
-        echo "`nUsing tag: $TAG_NAME for version upload`n"
-        $SSH_KEY = $Env:SSH_KEY
-        if (! $SSH_KEY) {
-          Write-Warning "The SSH secret is empty!"
-        }
-        echo "$SSH_KEY" > .\scripts\ssh_key
-        ./scripts/Upload-KiwixRelease.ps1 -yes
+jobs:
+  upload:
+  name: Upload assets to server
+  runs-on: windows-latest
+  steps:
+  # Check out the repository
+  - uses: actions/checkout@v3
+  - name: Find the release, get assets, and upload
+    run: |
+      $repository = $Env:REPOSITORY
+      $release = $Env:RELEASE
+      $version = $Env:VERSION
+      if (! $version) { $version = $Env:DISPATCH_VERSION }
+      if (! $version) {
+        Write-Host "`n** You must set a tag version so that we can find and upload the assets! **`n" -ForegroundColor Red
+        exit 1
+      }
+      echo "`nUsing tag: $TAG_NAME for version upload`n"
+      $SSH_KEY = $Env:SSH_KEY
+      if (! $SSH_KEY) {
+        Write-Warning "The SSH secret is empty!"
+      }
+      echo "$SSH_KEY" > .\scripts\ssh_key
+      ./scripts/Upload-KiwixRelease.ps1 -yes
