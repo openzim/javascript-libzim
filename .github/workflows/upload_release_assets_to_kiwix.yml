@@ -27,7 +27,7 @@ on:
   jobs:
     upload:
     name: Upload assets to server
-      runs-on: windows-latest
+    runs-on: windows-latest
       steps:
       # Check out the repository
       - uses: actions/checkout@v3
