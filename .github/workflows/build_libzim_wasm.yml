@@ -40,8 +40,11 @@ jobs:
       run: docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make
     - name: List directories with updated archives
       run: |
+        echo -e "\nList ./ :"
         ls -l
+        echo -e "\nList ./tests/prototype/ :"
         ls -l tests/prototype/
+        echo -e "\nList ./tests/test_large_file_access/ :"
         ls -l tests/test_large_file_access/ 
     # If we are not creating a release, archive the artefacts under this Action run
     - name: Archive build artefacts
@@ -54,7 +57,7 @@ jobs:
         path: |
           libzim-wasm.*
           libzim-asm.*
-          tests/test_large_file_access/large_file_acces.*
+          tests/test_large_file_access/large_file_access.*
     # Otherwise, zip the artefacts into respective packages (asm and wasm), create and upload releases
     - name: Zip the artefacts and create draft release
       id: zip-release
