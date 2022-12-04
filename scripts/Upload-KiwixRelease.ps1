@@ -12,7 +12,7 @@ param (
 # DEV: Ensure these values are correctly set
 $server = "master.download.kiwix.org"
 $target = "/data/openzim/release/javascript-libzim" # No final slash!
-$rgxAssetMatch = "^libzim-.+$tag\.zip" # A regular expression to match the type of asset to upload
+$rgxAssetMatch = "^libzim.+?[0-9.]+\.zip" # A regular expression to match the type of asset to upload
 if (! $repository) {
     $repository = "openzim/javascript-libzim"
 }
@@ -25,7 +25,7 @@ function Main {
     if (($tag -eq "") -and (!$help)) { 
         $tag = Read-Host "`nEnter the tag corresponding to the version to upload to Kiwix or ? for help"
         if ($tag -eq "") {
-            "`nYou must enter a tag!`n"
+            Write-Warning "You must enter a tag!`n"
             exit
         }
     }
