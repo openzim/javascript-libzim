@@ -4,8 +4,9 @@
 # It is designed to be run by a GitHub action. To test, from the commandline, supply $VERSION and $GITHUB_TOKEN.
 
 echo "Zipping the release archives..."
-zip libzim_wasm_$VERSION.zip libzim-wasm.*
-zip libzim_asm_$VERSION.zip libzim-asm.*
+NUMERIC_VERSION=$(sed 's/^v//' <<<"$VERSION")
+zip libzim_wasm_$NUMERIC_VERSION.zip libzim-wasm.*
+zip libzim_asm_$NUMERIC_VERSION.zip libzim-asm.*
 echo "Creating the draft release..."
 REST_RESPONSE=$(
   curl \
@@ -26,7 +27,6 @@ else
 fi
 # echo "UPLOAD_URL=$REST_RESPONSE" >> $GITHUB_OUTPUT # Use this if you need to access the URL in a later step with steps.zip-release.outputs.UPLOAD_URL
 # Upload archives to the draft release
-$NUMERIC_VERSION=$(sed 's/^v//' <<<"$VERSION")
 for FILE in "libzim_wasm_$NUMERIC_VERSION.zip" "libzim_asm_$NUMERIC_VERSION.zip"
 do
   echo -e "\nUploading $FILE to $UPLOAD_URL?name=$FILE..."
