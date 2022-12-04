@@ -13,7 +13,7 @@
         <pre>fallocate -l 5G examplefile</pre>
         <br/>
         <script>
-            var worker = new Worker("test_large_file_access.js");
+            var worker = new Worker("large_file_access.js");
             var control = document.getElementById("your-files");
             control.addEventListener("change", function (event) {
                 // When the control has changed, there is a new file

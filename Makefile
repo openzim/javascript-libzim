@@ -68,7 +68,7 @@ libzim-asm.js: build/lib/libzim.a libzim_bindings.cpp prejs_file_api.js postjs_f
 
 # Test case: for testing large files
 test_large_file_access.js: test_file_bindings.cpp prejs_test_file_access.js postjs_test_file_access.js
-	em++ -o test_large_file_access.js --bind test_file_bindings.cpp -std=c++11 -O0 --pre-js prejs_test_file_access.js --post-js postjs_test_file_access.js -lworkerfs.js
+	em++ -o tests/test_large_file_access/large_file_access.js --bind test_file_bindings.cpp -std=c++11 -O0 --pre-js prejs_test_file_access.js --post-js postjs_test_file_access.js -lworkerfs.js
 
 clean :
 	rm -rf xz-*
