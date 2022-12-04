@@ -26,7 +26,8 @@ else
 fi
 # echo "UPLOAD_URL=$REST_RESPONSE" >> $GITHUB_OUTPUT # Use this if you need to access the URL in a later step with steps.zip-release.outputs.UPLOAD_URL
 # Upload archives to the draft release
-for FILE in "libzim_wasm_$VERSION.zip" "libzim_asm_$VERSION.zip"
+$NUMERIC_VERSION=$(sed 's/^v//' <<<"$VERSION")
+for FILE in "libzim_wasm_$NUMERIC_VERSION.zip" "libzim_asm_$NUMERIC_VERSION.zip"
 do
   echo -e "\nUploading $FILE to $UPLOAD_URL?name=$FILE..."
   curl \
