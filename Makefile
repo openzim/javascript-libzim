@@ -53,6 +53,7 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 # Development WASM version for testing, completely unoptimized
 libzim-wasm.dev.js: build/lib/libzim.a libzim_bindings.cpp prejs_file_api.js postjs_file_api.js
 	em++ -o libzim-wasm.dev.js --bind libzim_bindings.cpp -I/src/build/include -L/src/build/lib -lzim -llzma -lzstd -lxapian -lz -licui18n -licuuc -licudata -lpthread -lm -fdiagnostics-color=always -pipe -Wall -Winvalid-pch -Wnon-virtual-dtor -Werror -std=c++11 -O0 -g --pre-js prejs_file_api.js --post-js postjs_file_api.js -s WASM=1 -s DISABLE_EXCEPTION_CATCHING=0 -s "EXPORTED_RUNTIME_METHODS=['ALLOC_NORMAL','printErr','ALLOC_STACK','print']" -s DEMANGLE_SUPPORT=1 -s TOTAL_MEMORY=83886080 -s ALLOW_MEMORY_GROWTH=1 -lworkerfs.js
+	cp libzim-wasm.dev.* tests/prototype/
 
 # Development ASM version for testing, completely unoptimized
 libzim-asm.dev.js: build/lib/libzim.a libzim_bindings.cpp prejs_file_api.js postjs_file_api.js

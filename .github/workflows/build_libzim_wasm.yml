@@ -38,9 +38,8 @@ jobs:
     # Creates the ASM and WASM artefacts, and the JS wrappers, using the Makefile in this repo
     - name: Compile the libzim WASM artefacts
       run: docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make
-    - name: Copy dev versions to test and list files
+    - name: List directories with updated archives
       run: |
-        cp libzim-wasm.dev.* tests/prototype/
         ls -l
         ls -l tests/prototype/
         ls -l tests/test_large_file_access/ 
