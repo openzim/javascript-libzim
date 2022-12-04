@@ -159,4 +159,5 @@ function Get-PushHelp {
 }
 # Ensure script starts from root directory
 cd $PSScriptRoot/..
+# Run the main script
 Main
