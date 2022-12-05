@@ -7,6 +7,14 @@ echo "Zipping the release archives..."
 NUMERIC_VERSION=$(sed 's/^v//' <<<"$VERSION")
 zip libzim_wasm_$NUMERIC_VERSION.zip libzim-wasm.*
 zip libzim_asm_$NUMERIC_VERSION.zip libzim-asm.*
+# If we initiated the build with a tag version, and the version doesn't already exist
+if [ $DISPATCH_VERSION ]; then
+  if [[ ! $(git tag) =~ "$VERSION" ]]; then
+    echo "Creating a corresponding tag: $VERSION"
+    git tag $VERSION
+    git push origin $VERSION
+  fi
+fi
 echo "Creating the draft release..."
 REST_RESPONSE=$(
   curl \
