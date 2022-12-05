@@ -18,7 +18,6 @@ on:
 # Define top-level environment vars we can refer to below
 env:
   REPOSITORY: ${{ github.repository }}
-  RELEASE: ${{ github.event.release }}
   VERSION: ${{ github.event.release.tag_name }}
   DISPATCH_VERSION: ${{ github.event.inputs.version }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -34,14 +33,13 @@ jobs:
     - name: Find the release, get assets, and upload
       run: |
         $repository = $Env:REPOSITORY
-        $release = $Env:RELEASE
         $version = $Env:VERSION
         if (! $version) { $version = $Env:DISPATCH_VERSION }
         if (! $version) {
           Write-Host "`n** You must set a tag version so that we can find and upload the assets! **`n" -ForegroundColor Red
           exit 1
         }
-        echo "`nUsing tag: $TAG_NAME for version upload`n"
+        echo "`nUsing tag: $version for version upload`n"
         $SSH_KEY = $Env:SSH_KEY
         if (! $SSH_KEY) {
           Write-Warning "The SSH secret is empty!"
