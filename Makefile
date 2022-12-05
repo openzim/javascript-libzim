@@ -1,4 +1,4 @@
-all: libzim-wasm.dev.js libzim-asm.dev.js libzim-wasm.js libzim-asm.js test_large_file_access.js
+all: libzim-wasm.dev.js libzim-asm.dev.js libzim-wasm.js libzim-asm.js large_file_access.js
 
 build/lib/liblzma.so : 
 	# Origin: https://tukaani.org/xz/xz-5.2.4.tar.gz
@@ -65,10 +65,10 @@ libzim-wasm.js: build/lib/libzim.a libzim_bindings.cpp prejs_file_api.js postjs_
 
 # Production ASM version, optimized and packed
 libzim-asm.js: build/lib/libzim.a libzim_bindings.cpp prejs_file_api.js postjs_file_api.js
-	em++ -o libzim-asm.js --bind libzim_bindings.cpp -I/src/build/include -L/src/build/lib -lzim -llzma -lzstd -lxapian -lz -licui18n -licuuc -licudata -lpthread -lm -pipe -Wall -Winvalid-pch -Wnon-virtual-dtor -std=c++11 -O3 --pre-js prejs_file_api.js --post-js postjs_file_api.js -s WASM=0 --memory-init-file 0 -s DISABLE_EXCEPTION_CATCHING=0 -s "EXPORTED_RUNTIME_METHODS=['ALLOC_NORMAL','printErr','ALLOC_STACK','print']" -s DEMANGLE_SUPPORT=1 -s TOTAL_MEMORY=83886080 -s ALLOW_MEMORY_GROWTH=1 -lworkerfs.js
+	em++ -o libzim-asm.js --bind libzim_bindings.cpp -I/src/build/include -L/src/build/lib -lzim -llzma -lzstd -lxapian -lz -licui18n -licuuc -licudata -lm -pipe -Wall -Winvalid-pch -Wnon-virtual-dtor -O3 --pre-js prejs_file_api.js --post-js postjs_file_api.js -s WASM=0 --memory-init-file 0 -s DISABLE_EXCEPTION_CATCHING=0 -s "EXPORTED_RUNTIME_METHODS=['ALLOC_NORMAL','printErr','ALLOC_STACK','print']" -s DEMANGLE_SUPPORT=1 -s TOTAL_MEMORY=83886080 -s ALLOW_MEMORY_GROWTH=1 -lworkerfs.js
 
 # Test case: for testing large files
-test_large_file_access.js: test_file_bindings.cpp prejs_test_file_access.js postjs_test_file_access.js
+large_file_access.js: test_file_bindings.cpp prejs_test_file_access.js postjs_test_file_access.js
 	em++ -o tests/test_large_file_access/large_file_access.js --bind test_file_bindings.cpp -std=c++11 -O0 --pre-js prejs_test_file_access.js --post-js postjs_test_file_access.js -lworkerfs.js
 
 clean :
