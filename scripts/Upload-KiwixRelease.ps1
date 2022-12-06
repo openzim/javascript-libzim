@@ -67,13 +67,13 @@ function Main {
         }
     }
     # We should have a release, so now get the assets
-    $releaseAssetsURLs = @()
+    $releaseAssets = @()
     if ($release.assets) {
         $release.assets | % {
             $asset = $_
             if ($asset.name -imatch $rgxAssetMatch) {
                 $assetUrl = $asset.url + "/" + $asset.name
-                $releaseAssetsURLs += $assetUrl
+                $releaseAssets += $asset
                 Write-Host "Found asset $assetUrl!" -ForegroundColor Green
             }
         }
@@ -85,18 +85,18 @@ function Main {
     # If we found assets, download them to file system
     $releaseFiles = @()
     $errorFlag = $false
-    if ($releaseAssetsURLs.count) {
-        $releaseAssetsURLs | % {
-            $filename = ($_ -replace "^.+/", "")
+    if ($releaseAssets.count) {
+        $releaseAssets | % {
+            $asset = $_
             if (! $dryrun) {
-                Invoke-WebRequest $_ -OutFile $filename
+                Invoke-WebRequest $asset.url -OutFile $asset.name
             }
-            if ((Test-Path $filename -PathType leaf) -or $dryrun) {
+            if ((Test-Path $asset.name -PathType leaf) -or $dryrun) {
                 if ($dryrun) { "[DRYRUN]:"}
-                Write-Host "Downloaded asset $filename to local file system..." -ForegroundColor Green
-                $releaseFiles += $filename # Store the filename to access when we upload
+                Write-Host "`n* Downloaded asset" $asset.name "to local file system..." -ForegroundColor Green
+                $releaseFiles += $asset.name # Store the filename to access when we upload
             } else {
-                Write-Host "`n** The file $filename does not appear to have downloaded correctly! **`n" -ForegroundColor Red
+                Write-Host "`n** The file" $asset.name "does not appear to have downloaded correctly! **`n" -ForegroundColor Red
                 $errorFlag = $true
             }
         }
@@ -105,7 +105,7 @@ function Main {
         }
     } else {
         ""
-        Write-Warning "No assets of Release " + $release.id + " ($tag) match $rgxAssetMatch!"
+        Write-Warning "No assets of Release" $release.id "($tag) match $rgxAssetMatch!"
         exit 1
     }
     # We should have filenames and files now, so upload to Kiwix
