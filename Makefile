@@ -50,7 +50,7 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	[ ! -f libzim-*.tar.xz ] && wget -N https://download.openzim.org/release/libzim/libzim-8.1.0.tar.xz || true
 	tar xf libzim-8.1.0.tar.xz
 	# It's no use trying to compile examples
-	sed -i -e "s/^subdir('examples')//" libzim-7.2.2/meson.build
+	sed -i -e "s/^subdir('examples')//" libzim-8.1.0/meson.build
 	cd libzim-8.1.0; PKG_CONFIG_PATH=/src/build/lib/pkgconfig meson --prefix=`pwd`/../build --cross-file=../emscripten-crosscompile.ini . build -DUSE_MMAP=false
 	cd libzim-8.1.0; ninja -C build
 	cd libzim-8.1.0; ninja -C build install
