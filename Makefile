@@ -9,21 +9,24 @@ build/lib/liblzma.so :
 	cd xz-5.2.4 ; emmake make 
 	cd xz-5.2.4 ; emmake make install
 	
-build/lib/libz.a : 
+build/lib/libz.a :
+ 	# Version not yet available in dev.kiwix.org
 	wget -N https://zlib.net/zlib-1.2.13.tar.gz
 	tar xf zlib-1.2.13.tar.gz
 	cd zlib-1.2.13 ; emconfigure ./configure --prefix=`pwd`/../build
 	cd zlib-1.2.13 ; emmake make
 	cd zlib-1.2.13 ; emmake make install
 	
-build/lib/libzstd.a : 
-	wget -N https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz
-	tar xf zstd-1.4.4.tar.gz
-	cd zstd-1.4.4/build/meson ; meson setup --cross-file=../../../emscripten-crosscompile.ini -Dbin_programs=false -Dbin_contrib=false -Dzlib=disabled -Dlzma=disabled -Dlz4=disabled --prefix=`pwd`/../../../build --libdir=lib builddir
-	cd zstd-1.4.4/build/meson/builddir ; ninja
-	cd zstd-1.4.4/build/meson/builddir ; ninja install
+build/lib/libzstd.a :
+	# Origin: https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz 
+	[ ! -f zstd-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/zstd-1.5.2.tar.gz || true
+	tar xf zstd-1.5.2.tar.gz
+	cd zstd-1.5.2/build/meson ; meson setup --cross-file=../../../emscripten-crosscompile.ini -Dbin_programs=false -Dbin_contrib=false -Dzlib=disabled -Dlzma=disabled -Dlz4=disabled --prefix=`pwd`/../../../build --libdir=lib builddir
+	cd zstd-1.5.2/build/meson/builddir ; ninja
+	cd zstd-1.5.2/build/meson/builddir ; ninja install
 	
 build/lib/libicudata.so : 
+	# Version not yet available in dev.kiwix.org
 	wget -N https://github.com/unicode-org/icu/releases/download/release-69-1/icu4c-69_1-src.tgz
 	tar xf icu4c-69_1-src.tgz
 	# It's no use trying to compile examples
@@ -33,7 +36,8 @@ build/lib/libicudata.so :
 	cd icu/source ; emmake make install
 
 build/lib/libxapian.a : build/lib/libz.a
-	wget -N https://oligarchy.co.uk/xapian/1.4.18/xapian-core-1.4.18.tar.xz
+	# Origin: https://oligarchy.co.uk/xapian/1.4.18/xapian-core-1.4.18.tar.xz
+	[ ! -f xapian-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/xapian-core-1.4.18.tar.xz || true
 	tar xf xapian-core-1.4.18.tar.xz
         # Some options coming from https://github.com/xapian/xapian/tree/master/xapian-core/emscripten
 	# cd xapian-core-1.4.18; emconfigure ./configure --prefix=`pwd`/../build "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" CPPFLAGS='-DFLINTLOCK_USE_FLOCK' CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti' --disable-backend-honey --disable-backend-inmemory --disable-shared --disable-backend-remote
@@ -42,13 +46,14 @@ build/lib/libxapian.a : build/lib/libz.a
 	cd xapian-core-1.4.18; emmake make install
 
 build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a build/lib/libicudata.so build/lib/libxapian.a
-	wget -N --content-disposition https://github.com/openzim/libzim/archive/7.2.2.tar.gz
-	tar xf libzim-7.2.2.tar.gz
+	# Origin: wget -N --content-disposition https://github.com/openzim/libzim/archive/7.2.2.tar.gz
+	[ ! -f libzim-*.tar.xz ] && wget -N https://download.openzim.org/release/libzim/libzim-8.1.0.tar.xz || true
+	tar xf libzim-8.1.0.tar.xz
 	# It's no use trying to compile examples
 	sed -i -e "s/^subdir('examples')//" libzim-7.2.2/meson.build
-	cd libzim-7.2.2; PKG_CONFIG_PATH=/src/build/lib/pkgconfig meson --prefix=`pwd`/../build --cross-file=../emscripten-crosscompile.ini . build -DUSE_MMAP=false
-	cd libzim-7.2.2; ninja -C build
-	cd libzim-7.2.2; ninja -C build install
+	cd libzim-8.1.0; PKG_CONFIG_PATH=/src/build/lib/pkgconfig meson --prefix=`pwd`/../build --cross-file=../emscripten-crosscompile.ini . build -DUSE_MMAP=false
+	cd libzim-8.1.0; ninja -C build
+	cd libzim-8.1.0; ninja -C build install
 
 # Development WASM version for testing, completely unoptimized
 libzim-wasm.dev.js: build/lib/libzim.a libzim_bindings.cpp prejs_file_api.js postjs_file_api.js
@@ -69,7 +74,8 @@ libzim-asm.js: build/lib/libzim.a libzim_bindings.cpp prejs_file_api.js postjs_f
 
 # Test case: for testing large files
 large_file_access.js: test_file_bindings.cpp prejs_test_file_access.js postjs_test_file_access.js
-	em++ -o tests/test_large_file_access/large_file_access.js --bind test_file_bindings.cpp -std=c++11 -O0 --pre-js prejs_test_file_access.js --post-js postjs_test_file_access.js -lworkerfs.js
+	em++ -o large_file_access.js --bind test_file_bindings.cpp -std=c++11 -O0 --pre-js prejs_test_file_access.js --post-js postjs_test_file_access.js -lworkerfs.js
+	cp large_file_access.* tests/test_large_file_access/
 
 clean :
 	rm -rf xz-*
