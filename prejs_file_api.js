@@ -44,12 +44,13 @@ self.addEventListener("message", function(e) {
     }
     else if (action === "init") {
         var files = e.data.files;
+        var assemblerType = e.data.assemblerType || 'runtime';
         // When using split ZIM files, we need to remove the last two letters of the suffix (like .zimaa -> .zim)
         var baseZimFileName = files[0].name.replace(/\.zim..$/, '.zim');
         Module = {};
         Module["onRuntimeInitialized"] = function() {
-            console.debug("runtime initialized");
             Module.loadArchive("/work/" + baseZimFileName);
+            console.debug(assemblerType + " initialized");
             outgoingMessagePort.postMessage("runtime initialized");
         };
         Module["arguments"] = [];

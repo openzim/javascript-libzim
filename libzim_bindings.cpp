@@ -14,7 +14,7 @@ std::shared_ptr<zim::Archive> g_archive;
 
 int main(int argc, char* argv[])
 {
-    std::cout << "wasm initialized" << std::endl;
+    std::cout << "assembler initialized" << std::endl;
     return 0;
 }
 
