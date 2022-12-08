@@ -27,8 +27,8 @@ build/lib/libzstd.a :
 	
 build/lib/libicudata.so : 
 	# Version not yet available in dev.kiwix.org
-	wget -N https://github.com/unicode-org/icu/releases/download/release-69-1/icu4c-69_1-src.tgz
-	tar xf icu4c-69_1-src.tgz
+	wget -N https://github.com/unicode-org/icu/releases/download/release-71-1/icu4c-71_1-src.tgz
+	tar xf icu4c-71_1-src.tgz
 	# It's no use trying to compile examples
 	sed -i -e 's/^SUBDIRS =\(.*\)$$(DATASUBDIR) $$(EXTRA) $$(SAMPLE) $$(TEST)\(.*\)/SUBDIRS =\1\2/' icu/source/Makefile.in
 	cd icu/source ; emconfigure ./configure --prefix=`pwd`/../../build
