@@ -8,7 +8,7 @@ the [ZIM File](https://wiki.openzim.org/wiki/ZIM_file_format) reader
 [ASM.js](https://developer.mozilla.org/en-US/docs/Games/Tools/asm.js)).
 
 A prototype in HTML/JS, for testing the WASM version, is provided at
-https://openzim.github.io/javascript-libzim/tests/prototyep/. This
+https://openzim.github.io/javascript-libzim/tests/prototype/. This
 prototype uses WORKERFS as the Emscripten File System and runs in a
 Web Worker. The file object is mounted before run, and the name is
 passed as argument.
