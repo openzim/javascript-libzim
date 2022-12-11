@@ -1,16 +1,16 @@
 # Workflow to build and publish the libzim ASM and WASM arttefacts together with the JavaScript wrapper.
 # If this workflow is triggered by the creation of a draft release, then the artefacts are uploaded to the release assets.
-# If it is triggered by a push or pull request to master, or manually, then the artefacts are archived under the corresponding Action.
+# If it is triggered by a push or pull request to main, or manually, then the artefacts are archived under the corresponding Action.
 
 name: Build and publish release artefacts (Docker)
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
     tags:
     - 'v*' # Tag push events matching v*, i.e. v1.0, v20.15.10
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       version:

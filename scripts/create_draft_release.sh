@@ -22,7 +22,7 @@ REST_RESPONSE=$(
     -H "Accept: application/vnd.github+json" \
     -H "Authorization: Bearer $GITHUB_TOKEN" \
     https://api.github.com/repos/openzim/javascript-libzim/releases \
-    -d "{\"tag_name\":\"$VERSION\",\"target_commitish\":\"master\",\"name\":\"Release $VERSION\",\"body\":\"\",\"draft\":true,\"prerelease\":false,\"generate_release_notes\":true}"
+    -d "{\"tag_name\":\"$VERSION\",\"target_commitish\":\"main\",\"name\":\"Release $VERSION\",\"body\":\"\",\"draft\":true,\"prerelease\":false,\"generate_release_notes\":true}"
 )
 echo $REST_RESPONSE
 UPLOAD_URL=$(echo $REST_RESPONSE | jq -r '.upload_url')
