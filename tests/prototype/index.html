@@ -6,7 +6,7 @@
         It uses a Web Worker to run libzim (compiled as wasm), and the File api to access the local file.<br/><br />
         Select a local ZIM file, open your browser console, and wait for the message "assembler initialized" in the console. Afterwards you can use the buttons below.<br/>
         For now, split ZIM files are not supported.<br/>
-        If you want to do a quick test, you can choose the file <a href="https://download.kiwix.org/zim/wikipedia/wikipedia_en_ray_charles_maxi_2021-10.zim">wikipedia_en_ray_charles_maxi_2021-10.zim</a>, and use "A/Baby_Grand" as the Path.
+        If you want to do a quick test, you can choose the file <a href="https://download.kiwix.org/zim/wikipedia_en_ray_charles_maxi.zim">wikipedia_en_ray_charles_maxi.zim</a>, and use "A/Baby_Grand" as the Path.
         <br/>
         <br/>
         ZIM file(s) : <input type="file" id="your-files" multiple>
@@ -107,6 +107,11 @@
       <br/>
       <iframe id="iframeResult" style="width:100%; height:400px">
       </iframe>
+      <p>To try an experimental implementaiton of Xapian Full Text search using the libzim WASM from this Repository, working in
+        a full-featured app, visit <a href="https://pwa.kiwix.org/www/index.html">https://pwa.kiwix.org</a>. Ensure you are accessing a ZIM archive that has a Full Text index (check the API panel at
+        the bottom of the Configuration page to be sure).
+      </p>
+      <p>On this server, there is also a <a href="../test_large_file_access/">utility for testing Emscripten large file access</a>.</p>
       </body>
       </html>
 
