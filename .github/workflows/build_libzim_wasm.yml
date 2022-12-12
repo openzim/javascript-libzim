@@ -65,7 +65,7 @@ jobs:
         make libzim_nightly
         docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make nightly
     # Creates the ASM and WASM artefacts, and the JS wrappers, using the Makefile in this repo
-    - name: Compile the libzim WASM artefacts
+    - name: Compile the libzim WASM artefacts from source
       if: github.event.inputs.buildtype == 'source'
       run: docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make
     - name: List directories with updated archives
@@ -107,9 +107,9 @@ jobs:
         chmod 600 ./scripts/ssh_key
         CURRENT_DATE=$(date +'%Y-%m-%d')
         target="/data/openzim/nightly/$CURRENT_DATE"
-        zip libzim_wasm_$CURRENT_DATE.zip libzim-wasm.*
-        zip libzim_asm_$CURRENT_DATE.zip libzim-asm.*
-        for FILE in "libzim_wasm_$CURRENT_DATE.zip" "libzim_asm_$CURRENT_DATE.zip"
+        zip libzim-javascript_wasm_$CURRENT_DATE.zip libzim-wasm.*
+        zip libzim-javascript_asm_$CURRENT_DATE.zip libzim-asm.*
+        for FILE in "libzim-javacript_wasm_$CURRENT_DATE.zip" "libzim-javascript_asm_$CURRENT_DATE.zip"
         do
           echo "Copying $FILE to $target"
           scp -P 30022 -o StrictHostKeyChecking=no -i ./scripts/ssh_key "$FILE" ci@master.download.kiwix.org:$target
