@@ -13,5 +13,6 @@
 /icu4c-*.tgz
 /xapian-core-*.tar.xz
 /libzim-*
+/libzim_wasm-*.tar.gz
 ssh_key
 github_token

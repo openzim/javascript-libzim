@@ -1,4 +1,20 @@
-all: libzim-wasm.dev.js libzim-asm.dev.js libzim-wasm.js libzim-asm.js large_file_access.js
+SHELL := /bin/bash
+
+all: build/lib/libzim.a libzim-wasm.dev.js libzim-asm.dev.js libzim-wasm.js libzim-asm.js large_file_access.js
+
+release: libzim-asm.js libzim-wasm.js
+
+nightly: libzim-wasm.dev.js libzim-asm.dev.js
+
+libzim_release:
+	wget -N $$(wget -q https://download.openzim.org/release/libzim/feed.xml -O - | grep -E -o -m1 "<link>[^<]+wasm-emscripten[^<]+</link>" | sed -E "s:</?link>::g")
+	tar xf libzim_wasm-emscripten-*.tar.gz
+	mkdir build
+	mkdir build/lib
+	cp -r libzim_wasm-emscripten-*/include/ build/include/
+	cp -r libzim_wasm-emscripten-*/lib/x86_64-linux-gnu/*.* build/lib/
+
+libzim_nightly:
 
 build/lib/liblzma.so : 
 	# Origin: https://tukaani.org/xz/xz-5.2.4.tar.gz
@@ -56,20 +72,20 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	cd libzim-8.1.0; ninja -C build install
 
 # Development WASM version for testing, completely unoptimized
-libzim-wasm.dev.js: build/lib/libzim.a libzim_bindings.cpp prejs_file_api.js postjs_file_api.js
+libzim-wasm.dev.js: libzim_bindings.cpp prejs_file_api.js postjs_file_api.js
 	em++ -o libzim-wasm.dev.js --bind libzim_bindings.cpp -I/src/build/include -L/src/build/lib -lzim -llzma -lzstd -lxapian -lz -licui18n -licuuc -licudata -lpthread -lm -fdiagnostics-color=always -pipe -Wall -Winvalid-pch -Wnon-virtual-dtor -Werror -std=c++11 -O0 -g --pre-js prejs_file_api.js --post-js postjs_file_api.js -s WASM=1 -s DISABLE_EXCEPTION_CATCHING=0 -s "EXPORTED_RUNTIME_METHODS=['ALLOC_NORMAL','printErr','ALLOC_STACK','print']" -s DEMANGLE_SUPPORT=1 -s INITIAL_MEMORY=83886080 -s ALLOW_MEMORY_GROWTH=1 -lworkerfs.js
 	cp libzim-wasm.dev.* tests/prototype/
 
 # Development ASM version for testing, completely unoptimized
-libzim-asm.dev.js: build/lib/libzim.a libzim_bindings.cpp prejs_file_api.js postjs_file_api.js
+libzim-asm.dev.js: libzim_bindings.cpp prejs_file_api.js postjs_file_api.js
 	em++ -o libzim-asm.dev.js --bind libzim_bindings.cpp -I/src/build/include -L/src/build/lib -lzim -llzma -lzstd -lxapian -lz -licui18n -licuuc -licudata -lpthread -lm -fdiagnostics-color=always -pipe -Wall -Winvalid-pch -Wnon-virtual-dtor -Werror -std=c++11 -O0 -g --pre-js prejs_file_api.js --post-js postjs_file_api.js -s WASM=0 --memory-init-file 0 -s DISABLE_EXCEPTION_CATCHING=0 -s "EXPORTED_RUNTIME_METHODS=['ALLOC_NORMAL','printErr','ALLOC_STACK','print']" -s DEMANGLE_SUPPORT=1 -s INITIAL_MEMORY=83886080 -s ALLOW_MEMORY_GROWTH=1 -lworkerfs.js
 
 # Production WASM version, optimized and packed
-libzim-wasm.js: build/lib/libzim.a libzim_bindings.cpp prejs_file_api.js postjs_file_api.js
+libzim-wasm.js: libzim_bindings.cpp prejs_file_api.js postjs_file_api.js
 	em++ -o libzim-wasm.js --bind libzim_bindings.cpp -I/src/build/include -L/src/build/lib -lzim -llzma -lzstd -lxapian -lz -licui18n -licuuc -licudata -O3 --pre-js prejs_file_api.js --post-js postjs_file_api.js -s WASM=1 -s "EXPORTED_RUNTIME_METHODS=['ALLOC_NORMAL','printErr','ALLOC_STACK','print']" -s INITIAL_MEMORY=83886080 -s ALLOW_MEMORY_GROWTH=1 -lworkerfs.js
 
 # Production ASM version, optimized and packed
-libzim-asm.js: build/lib/libzim.a libzim_bindings.cpp prejs_file_api.js postjs_file_api.js
+libzim-asm.js: libzim_bindings.cpp prejs_file_api.js postjs_file_api.js
 	em++ -o libzim-asm.js --bind libzim_bindings.cpp -I/src/build/include -L/src/build/lib -lzim -llzma -lzstd -lxapian -lz -licui18n -licuuc -licudata -O3 --pre-js prejs_file_api.js --post-js postjs_file_api.js -s WASM=0 --memory-init-file 0 -s MIN_EDGE_VERSION=40 -s "EXPORTED_RUNTIME_METHODS=['ALLOC_NORMAL','printErr','ALLOC_STACK','print']" -s INITIAL_MEMORY=83886080 -s ALLOW_MEMORY_GROWTH=1 -lworkerfs.js
 
 # Test case: for testing large files

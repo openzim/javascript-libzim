@@ -19,11 +19,24 @@ on:
           If left blank or incorrect format, archives will be archived instead of being uploaded to Releases.
         required: false
         default: ''
-
+      buildtype:
+        description: |
+          Choose the build type - 'source' (from source code, i.e., built from scratch - this takes a long time),
+          'release' (from libzim released binary and dependencies - recommended), or 'nightly' (from the latest libzim
+          nightly release)
+        type: choice
+        options:
+        - source
+        - release
+        - nightly
+        default: 'release'
+        required: true
+        
 # Define top-level environment vars we can refer to below
 env:
   VERSION: ${{ github.ref_name }}
   DISPATCH_VERSION: ${{ github.event.inputs.version }}
+  DISPATCH_TYPE: ${{ github.event.inputs.buildtype }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
 jobs:
@@ -35,8 +48,15 @@ jobs:
     # Customizes the Emscripten docker container via the Dockerfile in this repo
     - name: Build the Docker image
       run: docker build -t "docker-emscripten-libzim:v3" ./docker
+    # If we're bu8ilding release version
+    - name: Build release from libzim binaries
+      if: ${{ github.event.inputs.buildtype }} == 'release'
+      run: |
+        make libzim_release
+        docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make release
     # Creates the ASM and WASM artefacts, and the JS wrappers, using the Makefile in this repo
     - name: Compile the libzim WASM artefacts
+      if: ${{ github.event.inputs.buildtype }} == 'source'
       run: docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make
     - name: List directories with updated archives
       run: |
