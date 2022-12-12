@@ -59,7 +59,7 @@ jobs:
         make libzim_release
         docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make release
     # If we're building nightly version
-    - name: Build release from libzim binaries
+    - name: Build nightly from libzim binaries
       if: github.event.schedule || github.event.inputs.buildtype == 'nightly'
       run: |
         make libzim_nightly
@@ -80,7 +80,7 @@ jobs:
     - name: Archive build artefacts
       if: |
         github.event_name == 'pull_request' || github.event_name == 'push' && ! startsWith(github.ref_name, 'v')
-        || ! startsWith(github.event.inputs.version, 'v')
+        || github.event.inputs.buildtype != 'nightly' && ! github.event.schedule && ! startsWith(github.event.inputs.version, 'v')
       uses: actions/upload-artifact@v3
       with:
         name: libzim-wasm-artefacts
