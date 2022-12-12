@@ -109,7 +109,7 @@ jobs:
         target="/data/openzim/nightly/$CURRENT_DATE"
         zip libzim-javascript_wasm_$CURRENT_DATE.zip libzim-wasm.*
         zip libzim-javascript_asm_$CURRENT_DATE.zip libzim-asm.*
-        for FILE in "libzim-javacript_wasm_$CURRENT_DATE.zip" "libzim-javascript_asm_$CURRENT_DATE.zip"
+        for FILE in "libzim-javascript_wasm_$CURRENT_DATE.zip" "libzim-javascript_asm_$CURRENT_DATE.zip"
         do
           echo "Copying $FILE to $target"
           scp -P 30022 -o StrictHostKeyChecking=no -i ./scripts/ssh_key "$FILE" ci@master.download.kiwix.org:$target
