@@ -2,9 +2,9 @@ SHELL := /bin/bash
 
 all: build/lib/libzim.a libzim-wasm.dev.js libzim-asm.dev.js libzim-wasm.js libzim-asm.js large_file_access.js
 
-release: libzim-asm.js libzim-wasm.js
+release: libzim-asm.js libzim-wasm.js libzim-asm.dev.js libzim-wasm.dev.js large_file_access.js
 
-nightly: libzim-wasm.dev.js libzim-asm.dev.js
+nightly: libzim-asm.js libzim-wasm.js libzim-asm.dev.js libzim-wasm.dev.js large_file_access.js
 
 libzim_release:
 	wget -N $$(wget -q https://download.openzim.org/release/libzim/feed.xml -O - | grep -E -o -m1 "<link>[^<]+wasm-emscripten[^<]+</link>" | sed -E "s:</?link>::g")
@@ -15,6 +15,12 @@ libzim_release:
 	cp -r libzim_wasm-emscripten-*/lib/x86_64-linux-gnu/*.* build/lib/
 
 libzim_nightly:
+	wget -N https://download.openzim.org/nightly/$$(date +'%Y-%m-%d')/$$(wget -q https://download.openzim.org/nightly/$$(date +'%Y-%m-%d') -O - | grep -E -o -m1 '"libzim_wasm-emscripten[^"]+"' | sed -E 's/"//g')
+	tar xf libzim_wasm-emscripten-$$(date +'%Y-%m-%d').tar.gz
+	mkdir build
+	mkdir build/lib
+	cp -r libzim_wasm-emscripten-$$(date +'%Y-%m-%d')/include/ build/include/
+	cp -r libzim_wasm-emscripten-$$(date +'%Y-%m-%d')/lib/x86_64-linux-gnu/*.* build/lib/
 
 build/lib/liblzma.so : 
 	# Origin: https://tukaani.org/xz/xz-5.2.4.tar.gz

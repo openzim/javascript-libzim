@@ -5,6 +5,9 @@
 name: Build and publish release artefacts (Docker)
 
 on:
+  schedule:
+    # Nightly run at 02:21 UTC
+    - cron: '21 02 * * *'
   push:
     branches: [ main ]
     tags:
@@ -38,6 +41,7 @@ env:
   DISPATCH_VERSION: ${{ github.event.inputs.version }}
   DISPATCH_TYPE: ${{ github.event.inputs.buildtype }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  SSH_KEY: ${{ secrets.SSH_KEY }}
       
 jobs:
   build:
@@ -48,12 +52,18 @@ jobs:
     # Customizes the Emscripten docker container via the Dockerfile in this repo
     - name: Build the Docker image
       run: docker build -t "docker-emscripten-libzim:v3" ./docker
-    # If we're bu8ilding release version
+    # If we're building release version
     - name: Build release from libzim binaries
       if: github.event_name == 'pull_request' || github.event_name == 'push' || github.event.inputs.buildtype == 'release'
       run: |
         make libzim_release
         docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make release
+    # If we're building nightly version
+    - name: Build release from libzim binaries
+      if: github.event.schedule || github.event.inputs.buildtype == 'nightly'
+      run: |
+        make libzim_nightly
+        docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make nightly
     # Creates the ASM and WASM artefacts, and the JS wrappers, using the Makefile in this repo
     - name: Compile the libzim WASM artefacts
       if: github.event.inputs.buildtype == 'source'
@@ -78,7 +88,7 @@ jobs:
           libzim-wasm.*
           libzim-asm.*
           tests/test_large_file_access/large_file_access.*
-    # Otherwise, zip the artefacts into respective packages (asm and wasm), create and upload releases
+    # If it's a release, zip the artefacts into respective packages (asm and wasm), create and upload releases
     - name: Zip the artefacts and create draft release
       id: zip-release
       if: github.event_name == 'push' && startsWith(github.ref_name, 'v') || startsWith(github.event.inputs.version, 'v')
@@ -89,3 +99,18 @@ jobs:
         # Create a draft release and upload zipped artefacts as release assets
         chmod +x ./scripts/create_draft_release.sh
         ./scripts/create_draft_release.sh
+    # If it's a nightly build, zip artefacts and upload releases
+    - name: Zip the artefacts and upload to nightly
+      if: github.event.schedule || github.event.inputs.buildtype == 'nightly'
+      run: |
+        echo "$SSH_KEY" > ./scripts/ssh_key
+        chmod 600 ./scripts/ssh_key
+        CURRENT_DATE=$(date +'%Y-%m-%d')
+        target="/data/openzim/nightly/$CURRENT_DATE"
+        zip libzim_wasm_$CURRENT_DATE.zip libzim-wasm.*
+        zip libzim_asm_$CURRENT_DATE.zip libzim-asm.*
+        for FILE in "libzim_wasm_$CURRENT_DATE.zip" "libzim_asm_$CURRENT_DATE.zip"
+        do
+          echo "Copying $FILE to $target"
+          scp -P 30022 -o StrictHostKeyChecking=no -i ./scripts/ssh_key "$FILE" ci@master.download.kiwix.org:$target
+        done
