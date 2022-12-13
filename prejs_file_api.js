@@ -49,29 +49,26 @@ self.addEventListener("message", function(e) {
         var baseZimFileName = files[0].name.replace(/\.zim..$/, '.zim');
         Module = {};
         Module["onRuntimeInitialized"] = function() {
-            if (files[0].readMode === 'electron') {
-                Module.loadArchive(files[0].path);
-            } else {
-                Module.loadArchive("/work/" + baseZimFileName);
-            }
+            Module.loadArchive("/work/" + baseZimFileName);
             console.debug(assemblerType + " initialized");
             outgoingMessagePort.postMessage("runtime initialized");
         };
         Module["arguments"] = [];
         for (let i = 0; i < files.length; i++) {
-            if (files[i].readMode === 'electron') {
-              Module["arguments"].push(files[i].path);  
-            } else {
               Module["arguments"].push('/work/' + files[i].name);
-            }
         }
         Module["preRun"] = function() {
-            // Don't mount anything if using Electron, because we have compiled with NODERAWFS
-            if (files[0].readMode === 'electron') return;
             FS.mkdir("/work");
-            FS.mount(WORKERFS, {
-                files: files
+            if (files[0].readMode === 'electron') {
+                var path = files[0].path.replace(/[^\\/]+$/, '');
+                FS.mount(NODEFS, {
+                    root: path
+                }, "/work");    
+            } else {
+                FS.mount(WORKERFS, {
+                    files: files
                 }, "/work");
+            }
         };
         console.debug("baseZimFileName = " + baseZimFileName);
         console.debug('Module["arguments"] = ' + Module["arguments"])
