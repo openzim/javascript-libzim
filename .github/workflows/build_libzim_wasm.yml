@@ -34,7 +34,7 @@ on:
         - nightly
         default: 'release'
         required: true
-        
+
 # Define top-level environment vars we can refer to below
 env:
   VERSION: ${{ github.ref_name }}
@@ -42,10 +42,10 @@ env:
   DISPATCH_TYPE: ${{ github.event.inputs.buildtype }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   SSH_KEY: ${{ secrets.SSH_KEY }}
-      
+
 jobs:
   build:
-    name: Build and publish W/ASM artefacts 
+    name: Build and publish W/ASM artefacts
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -75,7 +75,7 @@ jobs:
         echo -e "\nList ./tests/prototype/ :"
         ls -l tests/prototype/
         echo -e "\nList ./tests/test_large_file_access/ :"
-        ls -l tests/test_large_file_access/ 
+        ls -l tests/test_large_file_access/
     # If we are not creating a release, archive the artefacts under this Action run
     - name: Archive build artefacts
       if: |
