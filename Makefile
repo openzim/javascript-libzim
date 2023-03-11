@@ -12,7 +12,7 @@ libzim_release:
 	mkdir build
 	mkdir build/lib
 	cp -r libzim_wasm-emscripten-*/include/ build/include/
-	cp -r libzim_wasm-emscripten-*/lib/dev/*.* build/lib/
+	cp -r libzim_wasm-emscripten-*/lib/*.* build/lib/
 
 libzim_nightly:
 	wget -N https://download.openzim.org/nightly/$$(date +'%Y-%m-%d')/$$(wget -q https://download.openzim.org/nightly/$$(date +'%Y-%m-%d') -O - | grep -E -o -m1 '"libzim_wasm-emscripten[^"]+"' | sed -E 's/"//g')
@@ -20,7 +20,7 @@ libzim_nightly:
 	mkdir build
 	mkdir build/lib
 	cp -r libzim_wasm-emscripten-$$(date +'%Y-%m-%d')/include/ build/include/
-	cp -r libzim_wasm-emscripten-$$(date +'%Y-%m-%d')/lib/dev/*.* build/lib/
+	cp -r libzim_wasm-emscripten-$$(date +'%Y-%m-%d')/lib/*.* build/lib/
 
 build/lib/liblzma.so : 
 	# Origin: https://tukaani.org/xz/xz-5.2.4.tar.gz
