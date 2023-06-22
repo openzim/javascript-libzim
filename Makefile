@@ -4,7 +4,7 @@ all: build/lib/libzim.a libzim-wasm.dev.js libzim-asm.dev.js libzim-wasm.js libz
 
 release: libzim-asm.js libzim-wasm.js large_file_access.js
 
-nightly: libzim-asm.js libzim-wasm.js libzim-asm.dev.js libzim-wasm.dev.js large_file_access.js
+nightly: libzim-asm.js libzim-wasm.js large_file_access.js
 
 libzim_release:
 	wget -N $$(wget -q https://download.openzim.org/release/libzim/feed.xml -O - | grep -E -o -m1 "<link>[^<]+wasm-emscripten[^<]+</link>" | sed -E "s:</?link>::g")
