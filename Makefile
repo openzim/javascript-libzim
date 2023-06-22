@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 all: build/lib/libzim.a libzim-wasm.dev.js libzim-asm.dev.js libzim-wasm.js libzim-asm.js large_file_access.js
 
-release: libzim-asm.js libzim-wasm.js libzim-asm.dev.js libzim-wasm.dev.js large_file_access.js
+release: libzim-asm.js libzim-wasm.js large_file_access.js
 
 nightly: libzim-asm.js libzim-wasm.js libzim-asm.dev.js libzim-wasm.dev.js large_file_access.js
 
