@@ -67,11 +67,7 @@ jobs:
     # Creates the ASM and WASM artefacts, and the JS wrappers, using the Makefile in this repo
     - name: Compile the libzim WASM artefacts from source
       if: github.event.inputs.buildtype == 'source'
-      run: |
-        # To avoid the error 'aclocal not found', we have to install automake
-        sudo apt-get install -y autotools-dev
-        sudo apt-get install -y automake
-        docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make
+      run: docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make
     - name: List directories with updated archives
       run: |
         echo -e "\nList ./ :"

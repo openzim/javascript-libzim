@@ -5,7 +5,9 @@ FROM emscripten/emsdk:3.1.41
 RUN apt-get update && apt-get install -y --no-install-recommends wget ninja-build pkg-config python3 autopoint libtool autoconf patch g++ locales curl git \
 # The following packages are needed for meson build, even if they are unused for compilation
 	zlib1g-dev libicu-dev libxapian-dev liblzma-dev libcurl4-openssl-dev \
-# Clean the apt-get list to keep the image size low 	
+# To avoid the error 'aclocal not found', we have to install automake
+    automake \
+  # Clean the apt-get list to keep the image size low 	
 	&& apt-get clean \
  	&& rm -rf /var/lib/apt/lists/*
 
