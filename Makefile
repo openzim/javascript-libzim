@@ -25,7 +25,7 @@ libzim_nightly:
 build/lib/liblzma.so : 
 	# Origin: https://tukaani.org/xz/xz-5.2.4.tar.gz
 	# To avoid the error 'aclocal not found', we have to install automake from libtool
-	apt-get install -y autoconf automake libtool
+	sudo apt-get install -y automake libtool
 	[ ! -f xz-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/xz-5.2.4.tar.gz || true
 	tar xf xz-5.2.4.tar.gz
 	cd xz-5.2.4 ; ./autogen.sh
