@@ -69,13 +69,13 @@ build/lib/libxapian.a : build/lib/libz.a
 
 build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a build/lib/libicudata.so build/lib/libxapian.a
 	# Origin: wget -N --content-disposition https://github.com/openzim/libzim/archive/7.2.2.tar.gz
-	[ ! -f libzim-*.tar.xz ] && wget -N https://download.openzim.org/release/libzim/libzim-8.1.0.tar.xz || true
-	tar xf libzim-8.1.0.tar.xz
+	[ ! -f libzim-*.tar.xz ] && wget -N https://download.openzim.org/release/libzim/libzim-8.2.0.tar.xz || true
+	tar xf libzim-8.2.0.tar.xz
 	# It's no use trying to compile examples
-	sed -i -e "s/^subdir('examples')//" libzim-8.1.0/meson.build
-	cd libzim-8.1.0; PKG_CONFIG_PATH=/src/build/lib/pkgconfig meson --prefix=`pwd`/../build --cross-file=../emscripten-crosscompile.ini . build -DUSE_MMAP=false
-	cd libzim-8.1.0; ninja -C build
-	cd libzim-8.1.0; ninja -C build install
+	sed -i -e "s/^subdir('examples')//" libzim-8.2.0/meson.build
+	cd libzim-8.2.0; PKG_CONFIG_PATH=/src/build/lib/pkgconfig meson --prefix=`pwd`/../build --cross-file=../emscripten-crosscompile.ini . build -DUSE_MMAP=false
+	cd libzim-8.2.0; ninja -C build
+	cd libzim-8.2.0; ninja -C build install
 
 # Development WASM version for testing with WORKERFS and NODEFS, completely unoptimized
 libzim-wasm.dev.js: libzim_bindings.cpp prejs_file_api.js postjs_file_api.js

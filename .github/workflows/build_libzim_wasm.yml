@@ -53,8 +53,9 @@ jobs:
     # Customizes the Emscripten docker container via the Dockerfile in this repo
     - name: Build the Docker image
       run: |
+        # Sometimes it might be necessary to use a different version of EMSDK for different scenarios
         if [[ $BUILD_TYPE =~ 'source' ]]; then
-          BUILD_VERSION='3.1.12'
+          BUILD_VERSION='3.1.41'
         else
           BUILD_VERSION='3.1.41'
         fi
