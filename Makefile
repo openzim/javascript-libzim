@@ -33,11 +33,11 @@ build/lib/liblzma.so :
 	
 build/lib/libz.a :
  	# Version not yet available in dev.kiwix.org
-	wget -N https://zlib.net/zlib-1.2.13.tar.gz
-	tar xf zlib-1.2.13.tar.gz
-	cd zlib-1.2.13 ; emconfigure ./configure --prefix=`pwd`/../build
-	cd zlib-1.2.13 ; emmake make
-	cd zlib-1.2.13 ; emmake make install
+	wget -N https://zlib.net/zlib-1.3.tar.gz
+	tar xf zlib-1.3.tar.gz
+	cd zlib-1.3 ; emconfigure ./configure --prefix=`pwd`/../build
+	cd zlib-1.3 ; emmake make
+	cd zlib-1.3 ; emmake make install
 	
 build/lib/libzstd.a :
 	# Origin: https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz 
