@@ -7,7 +7,7 @@ release: libzim-asm.js libzim-wasm.js libzim-asm.dev.js libzim-wasm.dev.js large
 nightly: libzim-asm.js libzim-wasm.js libzim-asm.dev.js libzim-wasm.dev.js large_file_access.js
 
 libzim_release:
-	wget -N https://download.openzim.org/release/libzim/libzim-8.2.0.tar.xz
+	wget -N https://download.openzim.org/release/libzim/libzim_wasm-emscripten-8.2.0.tar.gz
 	tar xf libzim_wasm-emscripten-*.tar.gz
 	mkdir build
 	mkdir build/lib
