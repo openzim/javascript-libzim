@@ -24,13 +24,13 @@ libzim_nightly:
 
 build/lib/liblzma.so : 
 	# Origin: https://tukaani.org/xz/xz-5.2.4.tar.gz
-	[ ! -f xz-*.tar.gz ] && wget -N https://tukaani.org/xz/xz-5.4.4.tar.gz || true
+	[ ! -f xz-*.tar.gz ] && wget -N https://tukaani.org/xz/xz-5.2.12.tar.gz || true
 	# [ ! -f xz-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/xz-5.2.4.tar.gz || true
-	tar xf xz-5.4.4.tar.gz
-	cd xz-5.4.4 ; ./autogen.sh
-	cd xz-5.4.4 ; emconfigure ./configure --prefix=`pwd`/../build
-	cd xz-5.4.4 ; emmake make 
-	cd xz-5.4.4 ; emmake make install
+	tar xf xz-5.2.12.tar.gz
+	cd xz-5.2.12 ; ./autogen.sh
+	cd xz-5.2.12 ; emconfigure ./configure --prefix=`pwd`/../build
+	cd xz-5.2.12 ; emmake make 
+	cd xz-5.2.12 ; emmake make install
 	
 build/lib/libz.a :
  	# Version not yet available in dev.kiwix.org
