@@ -19,7 +19,7 @@
     <br/>
     Search string : <input type="text" id="search" value="Ray">
     <br/>
-    <button type="button" onclick="callSearch()">Search</button>
+    <button type="button" id="btnCallSearch">Search</button>
     <br/>
     <div id="status"></div>
     <br/>
@@ -40,6 +40,9 @@
     
     var btnGetContentByPath = document.getElementById('btnGetContentByPath');
     btnGetContentByPath.addEventListener('click', callGetContentByPath, false);
+
+    var btnCallSearch = document.getElementById('btnCallSearch');
+    btnCallSearch.addEventListener('click', callSearch, false);
 
     control.addEventListener("change", function(event) {
         // When the control has changed, there are new files

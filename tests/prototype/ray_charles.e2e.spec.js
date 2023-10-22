@@ -66,7 +66,24 @@ function runTests (driver) {
             var title = await driver.executeScript('return document.getElementsByTagName("title")[0].innerHTML');
             console.log(title);
             assert.ok(title.includes('Baby Grand'));
+            // Switch back to main document
+            await driver.switchTo().defaultContent();
         });
+
+        // Click the btnCallSearch button and check the iframe contents contains 'A/Ray_Charles'
+        it('Search for "A/Ray_Charles" and check the iframe contents', async function () {
+            const btnCallSearch = await driver.findElement(By.id('btnCallSearch'));
+            await btnCallSearch.click();
+            await driver.sleep(1200);
+            // Switch to the iframe named "iframeResult"
+            await driver.switchTo().frame('iframeResult');
+            // Get the contents of the body element by tag name
+            var body = await driver.executeScript('return document.getElementsByTagName("body")[0].innerHTML');
+            assert.ok(body.includes('A/Ray_Charles'));
+            // Switch back to main document
+            await driver.switchTo().defaultContent();
+        });
+
     });
 
 }
