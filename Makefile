@@ -1,10 +1,16 @@
 SHELL := /bin/bash
 
-all: build/lib/libzim.a libzim-wasm.dev.js libzim-asm.dev.js libzim-wasm.js libzim-asm.js large_file_access.js
+all: rename_pjsn build/lib/libzim.a libzim-wasm.dev.js libzim-asm.dev.js libzim-wasm.js libzim-asm.js large_file_access.js restore_pjsn
 
 release: libzim-asm.js libzim-wasm.js libzim-asm.dev.js libzim-wasm.dev.js large_file_access.js
 
 nightly: libzim-asm.js libzim-wasm.js libzim-asm.dev.js libzim-wasm.dev.js large_file_access.js
+
+rename_pjsn:
+	mv package.json package.json.temp
+
+restore_pjsn:
+	mv package.json.temp package.json
 
 libzim_release:
 	wget -N $$(wget -q https://download.openzim.org/release/libzim/feed.xml -O - | grep -E -o -m1 "<link>[^<]+wasm-emscripten[^<]+</link>" | sed -E "s:</?link>::g")
