@@ -96,6 +96,11 @@ jobs:
           libzim-wasm.*
           libzim-asm.*
           tests/test_large_file_access/large_file_access.*
+    # Test that these binaries work with the prototype
+    - name: Test the libzim WASM artefacts with the prototype
+      run: |
+        npm ci
+        npm test
     # If it's a release, zip the artefacts into respective packages (asm and wasm), create and upload releases
     - name: Zip the artefacts and create draft release
       id: zip-release
