@@ -1,5 +1,10 @@
 {
+  "type": "module",
+  "scripts": {
+    "test": "npx start-server-and-test 'http-server --silent' 8080 'npx mocha ./tests/prototype/chromium.e2e.runner.js'"
+  },
   "devDependencies": {
-    "mocha": "^10.2.0"
+    "selenium-webdriver": "^4.14.0",
+    "start-server-and-test": "^2.0.1"
   }
 }

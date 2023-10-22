@@ -1,117 +1,126 @@
 <!doctype html>
-      <html>
-      <head><meta charset="utf-8"><title>Web Worker + file api zim reader</title></head>
-      <body>
-          <h1>Prototype to test libzim compiled with emscripten</h1>
-        It uses a Web Worker to run libzim (compiled as wasm), and the File api to access the local file.<br/><br />
-        Select a local ZIM file, open your browser console, and wait for the message "assembler initialized" in the console. Afterwards you can use the buttons below.<br/>
-        For now, split ZIM files are not supported.<br/>
-        If you want to do a quick test, you can choose the file <a href="https://download.kiwix.org/zim/wikipedia_en_ray_charles_maxi.zim">wikipedia_en_ray_charles_maxi.zim</a>, and use "A/Baby_Grand" as the Path.
-        <br/>
-        <br/>
-        ZIM file(s) : <input type="file" id="your-files" multiple>
-      <br/>
-      <script>
-        var worker = new Worker("libzim-wasm.dev.js");
-        var control = document.getElementById("your-files");
-        control.addEventListener("change", function(event) {
-            // When the control has changed, there are new files
-            files = control.files;
-            console.log("new files selected");
-            var tmpMessageChannel = new MessageChannel();
-            tmpMessageChannel.port1.onmessage = function(event2){
-                console.log(event2.data);
-            };
-            worker.postMessage({action: "init", files: files}, [tmpMessageChannel.port2]);
-            },false);
-        function callGetArticleCount() {
-            var tmpMessageChannel = new MessageChannel();
-            var t0 = performance.now();
-            tmpMessageChannel.port1.onmessage = function(event2){
-                var t1 = performance.now();
-                var readTime = Math.round(t1 - t0);
-                document.getElementById("status").textContent = "The ZIM file has " + event2.data + " articles";
-                console.log("article count given by the webworker in " + readTime + " milliseconds", event2.data);
-            };
-            document.getElementById("status").textContent = "Reading articleCount...";
-            worker.postMessage({action: "getArticleCount"}, [tmpMessageChannel.port2]);
-        }
-        
-        function callSearch() {
-            var tmpMessageChannel = new MessageChannel();
-            var text = document.getElementById("search").value;
-            var t0 = performance.now();
-            tmpMessageChannel.port1.onmessage = function(event2){
-                var t1 = performance.now();
-                var readTime = Math.round(t1 - t0);
-                var entries = event2.data.entries;
-                document.getElementById("status").textContent = "Search has found " + entries.length + " results";
-                var html = "";
-                for (var i=0; i<entries.length; i++) {
-                    html += entries[i].path + "<br/>";
-                }
-                window.frames[0].document.body.innerHTML = html;
-                console.log("search done by the webworker in " + readTime + " milliseconds", event2);
-            };
-            document.getElementById("status").textContent = "Searching...";
-            worker.postMessage({action: "search", text: text}, [tmpMessageChannel.port2]);
-        }
+    <html>
+    <head><meta charset="utf-8"><title>Web Worker + file api zim reader</title></head>
+    <body>
+        <h1>Prototype to test libzim compiled with emscripten</h1>
+    It uses a Web Worker to run libzim (compiled as wasm), and the File api to access the local file.<br/><br />
+    Select a local ZIM file, open your browser console, and wait for the message "assembler initialized" in the console. Afterwards you can use the buttons below.<br/>
+    For now, split ZIM files are not supported.<br/>
+    If you want to do a quick test, you can choose the file <a href="https://download.kiwix.org/zim/wikipedia_en_ray_charles_maxi.zim">wikipedia_en_ray_charles_maxi.zim</a>, and use "A/Baby_Grand" as the Path.
+    <br/>
+    <br/>
+    ZIM file(s) : <input type="file" id="your-files" multiple>
+    <br/>
+    <button type="button" id="btnArticleCount">Read article count</button>
+    <br/>
+    Path : <input type="text" id="path" value="A/Baby_Grand"> (you can use I/Baby_Grand_Billy_Joel.jpg.webp to test an image, or some other articles from a search below)
+    <br/>
+    <button type="button" id="btnGetContentByPath">Read content by its Path and display it</button>
+    <br/>
+    Search string : <input type="text" id="search" value="Ray">
+    <br/>
+    <button type="button" onclick="callSearch()">Search</button>
+    <br/>
+    <div id="status"></div>
+    <br/>
+    <iframe id="iframeResult" style="width:100%; height:400px">
+    </iframe>
+    <p>To try an experimental implementaiton of Xapian Full Text search using the libzim WASM from this Repository, working in
+    a full-featured app, visit <a href="https://pwa.kiwix.org/www/index.html">https://pwa.kiwix.org</a>. Ensure you are accessing a ZIM archive that has a Full Text index (check the API panel at
+    the bottom of the Configuration page to be sure).
+    </p>
+    <p>On this server, there is also a <a href="../test_large_file_access/">utility for testing Emscripten large file access</a>.</p>
+    <script>
+    var worker = new Worker("libzim-wasm.dev.js");
 
-        function callGetContentByPath() {
-            var tmpMessageChannel = new MessageChannel();
-            var path = document.getElementById("path").value;
-            var t0 = performance.now();
-            tmpMessageChannel.port1.onmessage = function(event2){
-                var t1 = performance.now();
-                var readTime = Math.round(t1 - t0);
-                document.getElementById("status").textContent = "Content read in " + readTime + " milliseconds";
-                console.log("Content given by the webworker in " + readTime + " milliseconds", event2.data);
-                mimetype = event2.data.mimetype;
-                content = event2.data.content;
-                if (mimetype && mimetype.startsWith('image')){
-                    // It's an image : let's create an image tag in the iframe to display it
-                    window.frames[0].document.body.innerHTML = "";
-                    var node = document.createElement("img");
-                    console.log("image content length " + content.length);
-                    var blob = new Blob([content], {
-                        type: "image"
-                    });
-                    var url = URL.createObjectURL(blob);
-                    node.addEventListener('load', function () {
-                        URL.revokeObjectURL(url);
-                    });
-                    node.setAttribute("src", url);
-                    window.frames[0].document.body.appendChild(node);
-                }
-                else {
-                    // Let's display the content directly in the iframe
-                    // TODO : TextDecoder is not supported by all platforms, see https://caniuse.com/?search=textdecoder
-                    window.frames[0].document.body.innerHTML = new TextDecoder().decode(content);
-                }
-            };
-            document.getElementById("status").textContent = "Reading content for path " + path;
-            worker.postMessage({action: "getEntryByPath", path: path, follow: true}, [tmpMessageChannel.port2]);
-        }
-      </script>
-      <button type="button" onclick="callGetArticleCount()">Read article count</button>
-      <br/>
-      Path : <input type="text" id="path" value="A/Baby_Grand"> (you can use I/Baby_Grand_Billy_Joel.jpg.webp to test an image, or some other articles from a search below)
-      <br/>
-      <button type="button" onclick="callGetContentByPath()">Read content by its Path and display it</button>
-      <br/>
-      Search string : <input type="text" id="search" value="Ray">
-      <br/>
-      <button type="button" onclick="callSearch()">Search</button>
-      <br/>
-      <div id="status"></div>
-      <br/>
-      <iframe id="iframeResult" style="width:100%; height:400px">
-      </iframe>
-      <p>To try an experimental implementaiton of Xapian Full Text search using the libzim WASM from this Repository, working in
-        a full-featured app, visit <a href="https://pwa.kiwix.org/www/index.html">https://pwa.kiwix.org</a>. Ensure you are accessing a ZIM archive that has a Full Text index (check the API panel at
-        the bottom of the Configuration page to be sure).
-      </p>
-      <p>On this server, there is also a <a href="../test_large_file_access/">utility for testing Emscripten large file access</a>.</p>
-      </body>
+    var control = document.getElementById("your-files");
+    
+    var btnArticleCount = document.getElementById('btnArticleCount');
+    btnArticleCount.addEventListener('click', callGetArticleCount, false);
+    
+    var btnGetContentByPath = document.getElementById('btnGetContentByPath');
+    btnGetContentByPath.addEventListener('click', callGetContentByPath, false);
+
+    control.addEventListener("change", function(event) {
+        // When the control has changed, there are new files
+        files = control.files;
+        console.log("new files selected");
+        var tmpMessageChannel = new MessageChannel();
+        tmpMessageChannel.port1.onmessage = function(event2){
+            console.log(event2.data);
+        };
+        worker.postMessage({action: "init", files: files}, [tmpMessageChannel.port2]);
+    }, false);
+
+    function callGetArticleCount() {
+        var tmpMessageChannel = new MessageChannel();
+        var t0 = performance.now();
+        tmpMessageChannel.port1.onmessage = function(event2){
+            var t1 = performance.now();
+            var readTime = Math.round(t1 - t0);
+            document.getElementById("status").innerHTML = 'The ZIM file has <span id="articleCount">' + event2.data + '</span> articles';
+            console.log("Article count given by the webworker in " + readTime + " milliseconds", event2.data);
+        };
+        document.getElementById("status").textContent = "Reading articleCount...";
+        worker.postMessage({action: "getArticleCount"}, [tmpMessageChannel.port2]);
+    }
+    
+    function callSearch() {
+        var tmpMessageChannel = new MessageChannel();
+        var text = document.getElementById("search").value;
+        var t0 = performance.now();
+        tmpMessageChannel.port1.onmessage = function(event2){
+            var t1 = performance.now();
+            var readTime = Math.round(t1 - t0);
+            var entries = event2.data.entries;
+            document.getElementById("status").textContent = "Search has found " + entries.length + " results";
+            var html = "";
+            for (var i=0; i<entries.length; i++) {
+                html += entries[i].path + "<br/>";
+            }
+            window.frames[0].document.body.innerHTML = html;
+            console.log("search done by the webworker in " + readTime + " milliseconds", event2);
+        };
+        document.getElementById("status").textContent = "Searching...";
+        worker.postMessage({action: "search", text: text}, [tmpMessageChannel.port2]);
+    }
+
+    function callGetContentByPath() {
+        var tmpMessageChannel = new MessageChannel();
+        var path = document.getElementById("path").value;
+        var t0 = performance.now();
+        tmpMessageChannel.port1.onmessage = function(event2){
+            var t1 = performance.now();
+            var readTime = Math.round(t1 - t0);
+            document.getElementById("status").textContent = "Content read in " + readTime + " milliseconds";
+            console.log("Content given by the webworker in " + readTime + " milliseconds", event2.data);
+            mimetype = event2.data.mimetype;
+            content = event2.data.content;
+            if (mimetype && mimetype.startsWith('image')){
+                // It's an image : let's create an image tag in the iframe to display it
+                window.frames[0].document.body.innerHTML = "";
+                var node = document.createElement("img");
+                console.log("image content length " + content.length);
+                var blob = new Blob([content], {
+                    type: "image"
+                });
+                var url = URL.createObjectURL(blob);
+                node.addEventListener('load', function () {
+                    URL.revokeObjectURL(url);
+                });
+                node.setAttribute("src", url);
+                window.frames[0].document.body.appendChild(node);
+            }
+            else {
+                // Let's display the content directly in the iframe
+                // TODO : TextDecoder is not supported by all platforms, see https://caniuse.com/?search=textdecoder
+                window.frames[0].document.body.innerHTML = new TextDecoder().decode(content);
+            }
+        };
+        document.getElementById("status").textContent = "Reading content for path " + path;
+        worker.postMessage({action: "getEntryByPath", path: path, follow: true}, [tmpMessageChannel.port2]);
+    }
+    </script>
+</body>
       </html>
 
