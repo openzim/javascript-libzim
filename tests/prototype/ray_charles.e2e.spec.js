@@ -28,7 +28,7 @@ function runTests (driver) {
 
     describe('Test the prototype', async function () {
         this.slow(10000);
-        this.timeOut(20000);
+        this.timeout(20000);
         
         it('Load index.html and check that it is correctly loaded', async function () {
             await driver.get('http://localhost:8080/tests/prototype/index.html');
@@ -83,6 +83,7 @@ function runTests (driver) {
             assert.ok(body.includes('A/Ray_Charles'));
             // Switch back to main document
             await driver.switchTo().defaultContent();
+            await driver.quit();
         });
 
     });
