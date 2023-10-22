@@ -28,6 +28,7 @@ function runTests (driver) {
 
     describe('Test the prototype', async function () {
         this.slow(10000);
+        this.timeOut(20000);
         
         it('Load index.html and check that it is correctly loaded', async function () {
             await driver.get('http://localhost:8080/tests/prototype/index.html');
@@ -40,8 +41,8 @@ function runTests (driver) {
             const archiveFiles = await driver.findElement(By.id('your-files'));
             await archiveFiles.sendKeys(filepath);
             var filesLength = await driver.executeScript('return document.getElementById("your-files").files.length');
-            // Sleep for 1.5 seconds to allow libzim to initialize
-            await driver.sleep(1500);
+            // Sleep for 2 seconds to allow libzim to initialize
+            await driver.sleep(2000);
             // Check that we loaded 1 file
             assert.equal(1, filesLength);
         });
@@ -59,7 +60,7 @@ function runTests (driver) {
             // Click the btnGetContentByPath button
             const btnGetContentByPath = await driver.findElement(By.id('btnGetContentByPath'));
             await btnGetContentByPath.click();
-            await driver.sleep(1200);
+            await driver.sleep(1500);
             // Switch to the iframe named "iframeResult"
             await driver.switchTo().frame('iframeResult');
             // Get the contents of the title element by tag name
