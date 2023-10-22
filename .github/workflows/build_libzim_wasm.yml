@@ -55,9 +55,9 @@ jobs:
       run: |
         # Sometimes it might be necessary to use a different version of EMSDK for different scenarios
         if [[ $BUILD_TYPE =~ 'source' ]]; then
-          BUILD_VERSION='3.1.42'
+          BUILD_VERSION='3.1.41'
         else
-          BUILD_VERSION='3.1.42'
+          BUILD_VERSION='3.1.41'
         fi
         docker build -t "docker-emscripten-libzim:v3" ./docker --build-arg VERSION=$BUILD_VERSION
     # If we're building release version
