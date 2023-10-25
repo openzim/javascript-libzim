@@ -15,7 +15,7 @@ restore_pjsn:
 	mv package.json.temp package.json
 
 libzim_release:
-	wget -N $$(wget -q https://download.openzim.org/release/libzim/feed.xml -O - | grep -E -o -m1 "<link>[^<]+wasm-emscripten[^<]+</link>" | sed -E "s:</?link>::g")
+	wget -N https://tmp.kiwix.org/ci/dev_preview/update_icu/libzim_wasm-emscripten-2023-10-25.tar.gz
 	tar xf libzim_wasm-emscripten-*.tar.gz
 	mkdir build
 	mkdir build/lib
