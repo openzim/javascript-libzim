@@ -57,7 +57,7 @@ build/lib/libzstd.a :
 	
 build/lib/libicudata.so : 
 	# Version not yet available in dev.kiwix.org
-	wget -N https://github.com/unicode-org/icu/releases/download/release-71-1/icu4c-71_1-src.tgz
+	wget -N https://github.com/unicode-org/icu/releases/download/release-73-2/icu4c-73_2-src.tgz
 	tar xf icu4c-71_1-src.tgz
 	# It's no use trying to compile examples
 	sed -i -e 's/^SUBDIRS =\(.*\)$$(DATASUBDIR) $$(EXTRA) $$(SAMPLE) $$(TEST)\(.*\)/SUBDIRS =\1\2/' icu/source/Makefile.in
@@ -67,7 +67,7 @@ build/lib/libicudata.so :
 
 build/lib/libxapian.a : build/lib/libz.a
 	# Origin: https://oligarchy.co.uk/xapian/1.4.18/xapian-core-1.4.18.tar.xz
-	[ ! -f xapian-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/xapian-core-1.4.18.tar.xz || true
+	[ ! -f xapian-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/xapian-core-1.4.23.tar.xz || true
 	tar xf xapian-core-1.4.18.tar.xz
         # Some options coming from https://github.com/xapian/xapian/tree/master/xapian-core/emscripten
 	# cd xapian-core-1.4.18; emconfigure ./configure --prefix=`pwd`/../build "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" CPPFLAGS='-DFLINTLOCK_USE_FLOCK' CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti' --disable-backend-honey --disable-backend-inmemory --disable-shared --disable-backend-remote
@@ -77,7 +77,7 @@ build/lib/libxapian.a : build/lib/libz.a
 
 build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a build/lib/libicudata.so build/lib/libxapian.a
 	# Origin: wget -N --content-disposition https://github.com/openzim/libzim/archive/7.2.2.tar.gz
-	[ ! -f libzim-*.tar.xz ] && wget -N https://download.openzim.org/release/libzim/libzim-8.2.1.tar.xz || true
+	[ ! -f libzim-*.tar.xz ] && wget -N https://download.openzim.org/release/libzim/libzim-9.0.0.tar.xz || true
 	tar xf libzim-8.2.1.tar.xz
 	# It's no use trying to compile examples
 	sed -i -e "s/^subdir('examples')//" libzim-8.2.1/meson.build
