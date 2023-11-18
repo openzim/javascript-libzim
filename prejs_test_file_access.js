@@ -1,20 +1,19 @@
-self.addEventListener("message", function(e) {
+self.addEventListener('message', function(e) {
     var outgoingMessagePort = e.ports[0];
-    console.debug("WebWorker called");
+    console.debug('WebWorker called');
     var files = e.data.files;
     var fileName = files[0].name;
     Module = {};
-    Module["onRuntimeInitialized"] = function() {
-        console.debug("runtime initialized");
-        var result = Module["test_big_file"]("/work/" + fileName);
+    Module['onRuntimeInitialized'] = function() {
+        console.debug('runtime initialized');
+        var result = Module['test_big_file']('/work/' + fileName);
         outgoingMessagePort.postMessage(result);
     };
-    Module["arguments"] = [ "/work/" + fileName ];
-    Module["preRun"] = function() {
-        FS.mkdir("/work");
+    Module['arguments'] = [ '/work/' + fileName ];
+    Module['preRun'] = function() {
+        FS.mkdir('/work');
         FS.mount(WORKERFS, {
             files: files
-            }, "/work");
+            }, '/work');
     };
-    console.debug("fileName = " + fileName);
-
+    console.debug('fileName = ' + fileName);
