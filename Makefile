@@ -41,13 +41,13 @@ build/lib/liblzma.so :
 	cd $$XZDIR ; emmake make install
 	
 build/lib/libz.a :
- 	# Version not yet available in dev.kiwix.org
+	# Version not yet available in dev.kiwix.org
 	wget -N https://zlib.net/zlib-1.3.tar.gz
 	tar xf zlib-*.tar.gz
 	ZLIBDIR=$(tar -tf zlib-*.tar.gz | head -1)
-    cd $$ZLIBDIR ; emconfigure ./configure --prefix=`pwd`/../build
-    cd $$ZLIBDIR ; emmake make
-    cd $$ZLIBDIR ; emmake make install
+	cd $$ZLIBDIR ; emconfigure ./configure --prefix=`pwd`/../build
+	cd $$ZLIBDIR ; emmake make
+	cd $$ZLIBDIR ; emmake make install
 	
 build/lib/libzstd.a :
 	# Origin: https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz 
