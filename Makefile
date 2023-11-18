@@ -33,32 +33,32 @@ libzim_nightly:
 build/lib/liblzma.so : 
 	# Origin: https://tukaani.org/xz/xz-5.2.4.tar.gz
 	[ ! -f xz-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/xz-5.2.4.tar.gz || true
-	tar xf xz-5.2.4.tar.gz
-	cd xz-5.2.4 ; ./autogen.sh
-	cd xz-5.2.4 ; emconfigure ./configure --prefix=`pwd`/../build
-	cd xz-5.2.4 ; emmake make 
-	cd xz-5.2.4 ; emmake make install
+	tar xf xz-*.tar.gz
+	cd xz-* ; ./autogen.sh
+	cd xz-* ; emconfigure ./configure --prefix=`pwd`/../build
+	cd xz-* ; emmake make 
+	cd xz-* ; emmake make install
 	
 build/lib/libz.a :
  	# Version not yet available in dev.kiwix.org
 	wget -N https://zlib.net/zlib-1.3.tar.gz
-	tar xf zlib-1.3.tar.gz
-	cd zlib-1.3 ; emconfigure ./configure --prefix=`pwd`/../build
-	cd zlib-1.3 ; emmake make
-	cd zlib-1.3 ; emmake make install
+	tar xf zlib-*.tar.gz
+	cd zlib-* ; emconfigure ./configure --prefix=`pwd`/../build
+	cd zlib-* ; emmake make
+	cd zlib-* ; emmake make install
 	
 build/lib/libzstd.a :
 	# Origin: https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz 
 	[ ! -f zstd-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/zstd-1.5.2.tar.gz || true
-	tar xf zstd-1.5.2.tar.gz
-	cd zstd-1.5.2/build/meson ; meson setup --cross-file=../../../emscripten-crosscompile.ini -Dbin_programs=false -Dbin_contrib=false -Dzlib=disabled -Dlzma=disabled -Dlz4=disabled --prefix=`pwd`/../../../build --libdir=lib builddir
-	cd zstd-1.5.2/build/meson/builddir ; ninja
-	cd zstd-1.5.2/build/meson/builddir ; ninja install
+	tar xf zstd-*.tar.gz
+	cd zstd-*/build/meson ; meson setup --cross-file=../../../emscripten-crosscompile.ini -Dbin_programs=false -Dbin_contrib=false -Dzlib=disabled -Dlzma=disabled -Dlz4=disabled --prefix=`pwd`/../../../build --libdir=lib builddir
+	cd zstd-*/build/meson/builddir ; ninja
+	cd zstd-*/build/meson/builddir ; ninja install
 	
 build/lib/libicudata.so : 
 	# Version not yet available in dev.kiwix.org
 	wget -N https://github.com/unicode-org/icu/releases/download/release-73-2/icu4c-73_2-src.tgz
-	tar xf icu4c-71_1-src.tgz
+	tar xf icu4c-*-src.tgz
 	# It's no use trying to compile examples
 	sed -i -e 's/^SUBDIRS =\(.*\)$$(DATASUBDIR) $$(EXTRA) $$(SAMPLE) $$(TEST)\(.*\)/SUBDIRS =\1\2/' icu/source/Makefile.in
 	cd icu/source ; emconfigure ./configure --prefix=`pwd`/../../build
@@ -68,22 +68,22 @@ build/lib/libicudata.so :
 build/lib/libxapian.a : build/lib/libz.a
 	# Origin: https://oligarchy.co.uk/xapian/1.4.18/xapian-core-1.4.18.tar.xz
 	[ ! -f xapian-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/xapian-core-1.4.23.tar.xz || true
-	tar xf xapian-core-1.4.18.tar.xz
+	tar xf xapian-core-*.tar.xz
         # Some options coming from https://github.com/xapian/xapian/tree/master/xapian-core/emscripten
 	# cd xapian-core-1.4.18; emconfigure ./configure --prefix=`pwd`/../build "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" CPPFLAGS='-DFLINTLOCK_USE_FLOCK' CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti' --disable-backend-honey --disable-backend-inmemory --disable-shared --disable-backend-remote
-	cd xapian-core-1.4.18; emconfigure ./configure --prefix=`pwd`/../build "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" --disable-shared --disable-backend-remote
-	cd xapian-core-1.4.18; emmake make "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib -std=c++11" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib -std=c++11"
-	cd xapian-core-1.4.18; emmake make install
+	cd xapian-core-*; emconfigure ./configure --prefix=`pwd`/../build "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" --disable-shared --disable-backend-remote
+	cd xapian-core-*; emmake make "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib -std=c++11" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib -std=c++11"
+	cd xapian-core-*; emmake make install
 
 build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a build/lib/libicudata.so build/lib/libxapian.a
 	# Origin: wget -N --content-disposition https://github.com/openzim/libzim/archive/7.2.2.tar.gz
 	[ ! -f libzim-*.tar.xz ] && wget -N https://download.openzim.org/release/libzim/libzim-9.0.0.tar.xz || true
-	tar xf libzim-8.2.1.tar.xz
+	tar xf libzim-*.tar.xz
 	# It's no use trying to compile examples
-	sed -i -e "s/^subdir('examples')//" libzim-8.2.1/meson.build
-	cd libzim-8.2.1; PKG_CONFIG_PATH=/src/build/lib/pkgconfig meson --prefix=`pwd`/../build --cross-file=../emscripten-crosscompile.ini . build -DUSE_MMAP=false
-	cd libzim-8.2.1; ninja -C build
-	cd libzim-8.2.1; ninja -C build install
+	sed -i -e "s/^subdir('examples')//" libzim-*/meson.build
+	cd libzim-*; PKG_CONFIG_PATH=/src/build/lib/pkgconfig meson --prefix=`pwd`/../build --cross-file=../emscripten-crosscompile.ini . build -DUSE_MMAP=false
+	cd libzim-*; ninja -C build
+	cd libzim-*; ninja -C build install
 
 # Development WASM version for testing with WORKERFS and NODEFS, completely unoptimized
 libzim-wasm.dev.js: libzim_bindings.cpp prejs_file_api.js postjs_file_api.js
