@@ -31,7 +31,8 @@
     </p>
     <p>On this server, there is also a <a href="../test_large_file_access/">utility for testing Emscripten large file access</a>.</p>
     <script>
-    var worker = new Worker("libzim-wasm.dev.js");
+    const workerFile = new URL(window.location.href).searchParams.get('worker') || "libzim-wasm.dev.js";
+    var worker = new Worker(workerFile);
 
     var control = document.getElementById("your-files");
     
