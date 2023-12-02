@@ -9,7 +9,7 @@ import path from 'path';
 const filename = 'wikipedia_en_ray_charles_maxi_2023-09.zim';
 const filepath = path.resolve('./tests/prototype/' + filename);
 
-const APP_HOST = new URL("http://localhost:9000/");
+const APP_HOST = new URL("http://localhost:8000/");
 
 /**
  *  Run the tests
@@ -30,7 +30,7 @@ function runTests (driver) {
     const BUILD_FILES = ["libzim-wasm.js", "libzim-wasm.dev.js", "libzim-asm.js", "libzim-asm.dev.js"];
     BUILD_FILES.forEach(function (file) {
 
-        describe(`Testing ${file}`, function () {
+        describe(`Testing ${file} on ${filename}`, function () {
             this.slow(10000);
             this.timeout(20000);
 

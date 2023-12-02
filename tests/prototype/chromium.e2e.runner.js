@@ -1,6 +1,7 @@
 import { Builder } from 'selenium-webdriver';
 import { Options } from 'selenium-webdriver/chrome.js';
 import rayCharles from './ray_charles.e2e.spec.js';
+import stackexchange from './stackexchange.e2e.spec.js';
 
 /* eslint-disable camelcase */
 
@@ -17,4 +18,5 @@ async function loadChromiumDriver () {
     return driver;
 };
 
-rayCharles.runTests(await loadChromiumDriver());
+// rayCharles.runTests(await loadChromiumDriver());
+stackexchange.runTests(await loadChromiumDriver());
