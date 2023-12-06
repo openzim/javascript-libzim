@@ -9,7 +9,7 @@ import path from 'path';
 const filename = 'wikipedia_en_ray_charles_maxi_2023-09.zim';
 const filepath = path.resolve('./tests/prototype/' + filename);
 
-const APP_HOST = new URL("http://localhost:8000/");
+const APP_HOST = new URL("http://localhost:8080/");
 
 /**
  *  Run the tests

@@ -9,7 +9,7 @@ import path from 'path';
 const filename = 'conlang.stackexchange.com_en_all_2023-10.zim';
 const filepath = path.resolve('./tests/prototype/' + filename);
 
-const APP_HOST = new URL("http://localhost:8000/");
+const APP_HOST = new URL("http://localhost:8080/");
 
 /**
  *  Run the tests
