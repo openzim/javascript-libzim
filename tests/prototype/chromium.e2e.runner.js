@@ -18,5 +18,5 @@ async function loadChromiumDriver () {
     return driver;
 };
 
-// rayCharles.runTests(await loadChromiumDriver());
+rayCharles.runTests(await loadChromiumDriver());
 stackexchange.runTests(await loadChromiumDriver());
