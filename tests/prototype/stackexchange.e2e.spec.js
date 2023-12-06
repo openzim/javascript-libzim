@@ -21,7 +21,12 @@ function runTests (driver) {
     driver.getCapabilities().then(function (caps) {
         browserName = caps.get('browserName');
         browserVersion = caps.get('browserVersion');
-        console.log('\nRunning Legacy Ray Charles tests on: ' + browserName + ' ' + browserVersion);
+        console.log(
+          "\nRunning StackExchange tests on." +
+            browserName +
+            " " +
+            browserVersion
+        );
     });
 
     // Set the implicit wait to 3 seconds
