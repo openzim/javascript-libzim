@@ -74,7 +74,7 @@ The units tested are the same as those tested in the prototype (see above) and r
 Tests are run in Chromium browser context (needed in order to test WORKERFS) rather than purely in Node, so they are based on automation of the
 prototype, and are available in `/tests/prototype`.
 
-To run tests manually, replace the four `libzim-[w]asm.*.*` files in `tests/prototype` with the versions you wish to test (this is done automatically
+To run tests manually, replace the six `libzim-[w]asm.*.*` files in `tests/prototype` with the versions you wish to test (this is done automatically
 if you build using the provided Makefile) and then run the following commands from the root of this Repository:
 
 ```
