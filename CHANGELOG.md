@@ -7,6 +7,17 @@ WASM binary (`libzim.a`) from scratch, but from version 0.1, we have been using 
 ASM applications. Release packages can be obtained from [Releases](https://github.com/openzim/javascript-libzim/releases) or from
 https://download.openzim.org/release/javascript-libzim/.
 
+## Javascript Libzim v0.6 (2023-10-13)
+
+* Extended Unit testing for libzim-[w]asm.*.js by @Rishabhg71
+* Compiling production files with DISABLE_EXCEPTION_CATCHING set to False by @Rishabhg71
+
+
+## Javascript Libzim v0.5 (2023-10-13)
+This release is built with Emscripten 3.4.1 and builds the new libzim 9.0.0 from libzim binaries.
+
+* Create Unit tests for builds by @Jaifroid in #62
+
 ## Javascript Libzim v0.4 (2023-10-13)
 
 This release uses Emscripten 3.1.41 to build the final ASM/WASM versions from libzim **source** v8.2.1. It is built from source code because
