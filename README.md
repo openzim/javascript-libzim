@@ -76,6 +76,7 @@ prototype, and are available in `/tests/prototype`.
 
 To run tests manually, replace the six `libzim-[w]asm.*.*` files in `tests/prototype` with the versions you wish to test (this is done automatically
 if you build using the provided Makefile) and then run the following commands from the root of this Repository:
+If you want to test certain build files you can start the server via `npx http-server --port 8080` and then visit `http://127.0.0.1:8080/tests/prototype/index.html?worker=libzim-[w]asm.*.*`
 
 ```
 npm install
