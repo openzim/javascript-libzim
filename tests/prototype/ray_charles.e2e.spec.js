@@ -40,7 +40,10 @@ function runTests (driver) {
             this.timeout(20000);
 
             before(async function () {
-                const APP_URL = APP_HOST.href + 'tests/prototype/index.html?worker=' + encodeURI(APP_HOST.href + file);
+                const APP_URL =
+                  APP_HOST.href +
+                  "tests/prototype/index.html?worker=" +
+                  encodeURI(file);
 
                 await driver.get(APP_URL);
                 await driver.wait(until.elementLocated(By.id('iframeResult')));
