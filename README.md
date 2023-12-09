@@ -63,10 +63,10 @@ sudo apt install zlib1g-dev libicu-dev libxapian-dev liblzma-dev
 
 ## Tests
 
-Basic Unit tests are run on each automated build before publishing on the WASM development versions (`libim-wasm.dev.js` and `libzim-wasm.dev.wasm`).
-The units tested are the same as those tested in the prototype (see above), i.e.:
+Basic Unit tests are run on each automated build before publishing on the ASM and WASM builds (e.g., `libim-wasm.dev.js` and `libzim-wasm.dev.wasm`).
+The units tested are the same as those tested in the prototype (see above) and run on two test ZIMs. The specific tests are:
 
-* mounting a test archive in the libzim WASM;
+* mounting a test archive in each of the four libzim builds;
 * checking the reported article count;
 * loading an article;
 * searching.
@@ -74,13 +74,15 @@ The units tested are the same as those tested in the prototype (see above), i.e.
 Tests are run in Chromium browser context (needed in order to test WORKERFS) rather than purely in Node, so they are based on automation of the
 prototype, and are available in `/tests/prototype`.
 
-To run tests manually, replace the two `libzim-wasm.*.*` files in `tests/prototype` with the versions you wish to test (this is done automatically
+To run tests manually, replace the six `libzim-[w]asm.*.*` files in `tests/prototype` with the versions you wish to test (this is done automatically
 if you build using the provided Makefile) and then run the following commands from the root of this Repository:
 
 ```
 npm install
 npm test
 ```
+
+If you want to test certain build files you can start the server via `npx http-server --port 8080` and then visit `http://127.0.0.1:8080/tests/prototype/index.html?worker=libzim-[w]asm.*.*`.
 
 To run tests in a different browser, copy and adapt the test runner `chromium.e2e.runner.js`. Run it manually like so:
 
