@@ -57,7 +57,7 @@ jobs:
     name: Build and publish W/ASM artefacts
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     # Customizes the Emscripten docker container via the Dockerfile in this repo
     - name: Build the Docker image
       run: |
