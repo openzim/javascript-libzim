@@ -9,11 +9,11 @@ on:
   # Allows triggering the workflow manually
   workflow_dispatch:
     inputs:
-    version:
-      description: |
-        Set the release version whose assets to upload, like v9.9.9 (must be an exisitng release).
-      required: true
-      default: 'v'
+      version:
+        description: |
+          Set the release version whose assets to upload, like v9.9.9 (must be an exisitng release).
+        required: true
+        default: 'v'
 
 # Define top-level environment vars we can refer to below
 env:

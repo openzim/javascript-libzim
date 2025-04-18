@@ -34,12 +34,20 @@ on:
         - nightly
         default: 'release'
         required: true
+      libzim_version:
+        description: |
+          If you wish to build from a specific libzim version, set the version, like 9.9.9 (no 'v').
+          If left blank, the latest libzim version will be used. Only works if buildtype is 'release'.
+        required: false
+        default: ''
+        type: string
 
 # Define top-level environment vars we can refer to below
 env:
   VERSION: ${{ github.ref_name }}
   DISPATCH_VERSION: ${{ github.event.inputs.version }}
   DISPATCH_TYPE: ${{ github.event.inputs.buildtype }}
+  DISPATCH_LIBZIM_VERSION: ${{ github.event.inputs.libzim_version }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   SSH_KEY: ${{ secrets.SSH_KEY }}
   BUILD_TYPE: ${{ github.event.inputs.buildtype }}
@@ -71,7 +79,7 @@ jobs:
       if: github.event.schedule || github.event.inputs.buildtype == 'nightly'
       run: |
         make libzim_nightly
-        docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make nightly
+        docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) -e LIBZIM_VERSION=${{ env.DISPATCH_LIBZIM_VERSION }} docker-emscripten-libzim:v3 make nightly
     # Creates the ASM and WASM artefacts, and the JS wrappers, using the Makefile in this repo
     - name: Compile the libzim WASM artefacts from source
       if: github.event.inputs.buildtype == 'source'
