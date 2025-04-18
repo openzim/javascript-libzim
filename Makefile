@@ -15,8 +15,7 @@ restore_pjsn:
 	mv package.json.temp package.json
 
 libzim_release:
-	# wget -N $$(wget -q https://download.openzim.org/release/libzim/feed.xml -O - | grep -E -o -m1 "<link>[^<]+wasm-emscripten[^<]+</link>" | sed -E "s:</?link>::g")
-	wget -N https://download.openzim.org/release/libzim/libzim_wasm-emscripten-9.2.3-1.tar.gz # Temporary last working version, until latest is fixed
+	wget -N $$(wget -q https://download.openzim.org/release/libzim/feed.xml -O - | grep -E -o -m1 "<link>[^<]+wasm-emscripten[^<]+</link>" | sed -E "s:</?link>::g")
 	tar xf libzim_wasm-emscripten-*.tar.gz
 	mkdir build
 	mkdir build/lib
