@@ -89,7 +89,7 @@ jobs:
       if: |
         github.event_name == 'pull_request' || github.event_name == 'push' && ! startsWith(github.ref_name, 'v')
         || github.event.inputs.buildtype != 'nightly' && ! github.event.schedule && ! startsWith(github.event.inputs.version, 'v')
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: libzim-wasm-artefacts
         path: |
