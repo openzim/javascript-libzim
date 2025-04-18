@@ -47,7 +47,7 @@ env:
   VERSION: ${{ github.ref_name }}
   DISPATCH_VERSION: ${{ github.event.inputs.version }}
   DISPATCH_TYPE: ${{ github.event.inputs.buildtype }}
-  DISPATCH_LIBZIM_VERSION: ${{ github.event.inputs.libzim_version }}
+  LIBZIM_VERSION: ${{ github.event.inputs.libzim_version }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   SSH_KEY: ${{ secrets.SSH_KEY }}
   BUILD_TYPE: ${{ github.event.inputs.buildtype }}
@@ -73,13 +73,13 @@ jobs:
       if: github.event_name == 'pull_request' || github.event_name == 'push' || github.event.inputs.buildtype == 'release'
       run: |
         make libzim_release
-        docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make release
+        docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) -e LIBZIM_VERSION=${{ env.LIBZIM_VERSION }} docker-emscripten-libzim:v3 make release
     # If we're building nightly version
     - name: Build nightly from libzim binaries
       if: github.event.schedule || github.event.inputs.buildtype == 'nightly'
       run: |
         make libzim_nightly
-        docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) -e LIBZIM_VERSION=${{ env.DISPATCH_LIBZIM_VERSION }} docker-emscripten-libzim:v3 make nightly
+        docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make nightly
     # Creates the ASM and WASM artefacts, and the JS wrappers, using the Makefile in this repo
     - name: Compile the libzim WASM artefacts from source
       if: github.event.inputs.buildtype == 'source'
