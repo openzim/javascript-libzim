@@ -34,12 +34,20 @@ on:
         - nightly
         default: 'release'
         required: true
+      libzim_version:
+        description: |
+          If you wish to build from a specific libzim version, set the version, like 9.9.9 (no 'v').
+          If left blank, the latest libzim version will be used. Only works if buildtype is 'release'.
+        required: false
+        default: ''
+        type: string
 
 # Define top-level environment vars we can refer to below
 env:
   VERSION: ${{ github.ref_name }}
   DISPATCH_VERSION: ${{ github.event.inputs.version }}
   DISPATCH_TYPE: ${{ github.event.inputs.buildtype }}
+  LIBZIM_VERSION: ${{ github.event.inputs.libzim_version }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   SSH_KEY: ${{ secrets.SSH_KEY }}
   BUILD_TYPE: ${{ github.event.inputs.buildtype }}
@@ -65,7 +73,7 @@ jobs:
       if: github.event_name == 'pull_request' || github.event_name == 'push' || github.event.inputs.buildtype == 'release'
       run: |
         make libzim_release
-        docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make release
+        docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) -e LIBZIM_VERSION=${{ env.LIBZIM_VERSION }} docker-emscripten-libzim:v3 make release
     # If we're building nightly version
     - name: Build nightly from libzim binaries
       if: github.event.schedule || github.event.inputs.buildtype == 'nightly'
