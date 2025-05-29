@@ -6,8 +6,8 @@ name: Build and publish release artefacts (Docker)
 
 on:
   schedule:
-    # Nightly run at 02:21 UTC
-    - cron: '21 02 * * *'
+    # Nightly run at 03:52 UTC
+    - cron: '52 03 * * *'
   push:
     branches: [ main ]
     tags:
