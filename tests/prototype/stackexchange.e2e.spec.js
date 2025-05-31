@@ -75,25 +75,26 @@ function runTests (driver) {
             });
 
             it('Load the Image "fatarrows" and check', async function () {
-                // Click the btnGetContentByPath button
                 const pathInput = await driver.findElement(By.id('path'));
                 await pathInput.clear();
                 await pathInput.sendKeys('C/Img/fatarrows.png');
-
                 const btnGetContentByPath = await driver.findElement(By.id('btnGetContentByPath'));
                 await btnGetContentByPath.click();
-                await driver.sleep(1500);
-                // Switch to the iframe named "iframeResult"
-                await driver.switchTo().frame('iframeResult');
-                // Get the contents of the title element by tag name
-                const img = await driver.findElement(By.js('return document.getElementsByTagName("img")[0]'));
-                assert.ok(img);
+                // Switch to the iframe first
+                await driver.switchTo().frame('iframeResult');                
+                // Wait for the image to be present in the iframe
+                await driver.wait(until.elementLocated(By.tagName('img')), 5000);                
+                // Now find the image element
+                const img = await driver.findElement(By.tagName('img'));
+                assert.ok(img);                
                 // Switch back to main document
                 await driver.switchTo().defaultContent();
             });
 
             // Click the btnCallSearch button and check the iframe contents contains 'C/Ray'
             it('Search for "C/Ray" and check the iframe contents', async function () {
+                // Wait for the button to be present before clicking
+                await driver.wait(until.elementLocated(By.id('btnCallSearch')), 5000);
                 const btnCallSearch = await driver.findElement(By.id('btnCallSearch'));
                 await btnCallSearch.click();
                 await driver.sleep(1200);
