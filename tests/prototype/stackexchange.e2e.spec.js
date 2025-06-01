@@ -83,26 +83,46 @@ function runTests (driver) {
                 // Switch to the iframe first
                 await driver.switchTo().frame('iframeResult');                
                 // Wait for the image to be present in the iframe
-                await driver.wait(until.elementLocated(By.tagName('img')), 5000);                
+                await driver.wait(until.elementLocated(By.css('img ')), 5000);                
                 // Now find the image element
-                const img = await driver.findElement(By.tagName('img'));
+                const img = await driver.findElement(By.css('img'));
                 assert.ok(img);                
                 // Switch back to main document
                 await driver.switchTo().defaultContent();
             });
 
-            // Click the btnCallSearch button and check the iframe contents contains 'C/Ray'
-            it('Search for "C/Ray" and check the iframe contents', async function () {
+            // Click the btnCallSearch button with search field set to 'greek' and check the iframe contents contains  'questions/373/greek-based-altlangs'
+            it('Search for "greek" and check the iframe contents', async function () {
                 // Wait for the button to be present before clicking
                 await driver.wait(until.elementLocated(By.id('btnCallSearch')), 5000);
                 const btnCallSearch = await driver.findElement(By.id('btnCallSearch'));
+                // Set the search field to 'greek'
+                const searchField = await driver.findElement(By.id('search'));
+                await searchField.clear();
+                await searchField.sendKeys('greek');
+                // Click the btnCallSearch button
                 await btnCallSearch.click();
                 await driver.sleep(1200);
+                // Switch to the iframe named 'iframeResult'
+                await driver.switchTo().frame('iframeResult');
+                // Get the contents of the body element by CSS selector
+                var body = await driver.executeScript('return document.querySelector("body").innerHTML');
+                assert.ok(body.includes('questions/373/greek-based-altlangs'));
+                // Switch back to main document
+                await driver.switchTo().defaultContent();
+            });
+
+            // Click the btnCallSuggest button with search field already set to 'greek' and check the iframe contents contains ''
+            it('Suggest for "greek" and check the iframe contents contains "A Hypothetical Mediterranean Language"', async function () {
+                const btnCallSuggest = await driver.findElement(By.id('btnCallSuggest'));
+                // Note that the suggest field was set to 'greek' in the previous test
+                await btnCallSuggest.click();
+                await driver.sleep(2000);
                 // Switch to the iframe named "iframeResult"
                 await driver.switchTo().frame('iframeResult');
-                // Get the contents of the body element by tag name
-                var body = await driver.executeScript('return document.getElementsByTagName("body")[0].innerHTML');
-                assert.ok(body.includes('questions/373/greek-based-altlangs'));
+                // Get the contents of the body element by CSS selector
+                var body = await driver.executeScript('return document.querySelector("body").innerHTML');
+                assert.ok(body.includes('A Hypothetical Mediterranean Language'));
                 // Switch back to main document
                 await driver.switchTo().defaultContent();
             });

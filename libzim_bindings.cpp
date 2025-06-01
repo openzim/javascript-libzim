@@ -2,6 +2,7 @@
 #include <zim/item.h>
 #include <zim/error.h>
 #include <zim/search.h>
+#include <zim/suggestion.h>
 #include <iostream>
 #include <chrono>
 #include <emscripten/bind.h>
@@ -69,6 +70,9 @@ public:
     std::string getPath() {
         return m_entry.getPath();
     }
+    std::string getTitle() {
+        return m_entry.getTitle();
+    }
     bool isRedirect() {
         return m_entry.isRedirect();
     }
@@ -79,6 +83,81 @@ public:
 private:
     zim::Entry m_entry;
 };
+
+// Forward declaration
+class SuggestionSearchWrapper;
+
+// SuggestionSearcher wrapper
+class SuggestionSearcherWrapper {
+public:
+    SuggestionSearcherWrapper() {
+        if (!g_archive) {
+            throw std::runtime_error("No archive loaded");
+        }
+        searcher = std::make_unique<zim::SuggestionSearcher>(*g_archive);
+    }
+    
+    SuggestionSearchWrapper suggest(const std::string& query);
+
+private:
+    std::unique_ptr<zim::SuggestionSearcher> searcher;
+};
+
+// SuggestionSearch wrapper
+class SuggestionSearchWrapper {
+public:
+    // Use move constructor to avoid copy issues
+    SuggestionSearchWrapper(zim::SuggestionSearch&& search)
+        : search_(std::move(search)) {}
+    
+    unsigned int getEstimatedMatches() const {
+        try {
+            return search_.getEstimatedMatches();
+        } catch (const std::exception& e) {
+            std::cout << "getEstimatedMatches error: " << e.what() << std::endl;
+            return 0;
+        }
+    }
+    
+    std::vector<EntryWrapper> getResults(int start, int count) const {
+        try {
+            zim::SuggestionResultSet resultSet = search_.getResults(start, count);
+            std::vector<EntryWrapper> results;
+            
+            // Use the iterator to get entries
+            for (auto it = resultSet.begin(); it != resultSet.end(); ++it) {
+                try {
+                    // Use the iterator's getEntry() method
+                    zim::Entry entry = it.getEntry();
+                    results.push_back(EntryWrapper(entry));
+                } catch (const std::exception& e) {
+                    std::cout << "Error getting entry from suggestion iterator: " << e.what() << std::endl;
+                    // Skip this item and continue
+                }
+            }
+            
+            return results;
+        } catch (const std::exception& e) {
+            std::cout << "getResults error: " << e.what() << std::endl;
+            return std::vector<EntryWrapper>();
+        }
+    }
+
+private:
+    zim::SuggestionSearch search_;
+};
+
+// Implement the suggest method (needs to be after SuggestionSearchWrapper definition)
+SuggestionSearchWrapper SuggestionSearcherWrapper::suggest(const std::string& query) {
+    try {
+        zim::SuggestionSearch search = searcher->suggest(query);
+        // Use move constructor
+        return SuggestionSearchWrapper(std::move(search));
+    } catch (const std::exception& e) {
+        std::cout << "suggest error: " << e.what() << std::endl;
+        throw;
+    }
+}
 
 // Get an entry by its path
 std::unique_ptr<EntryWrapper> getEntryByPath(std::string url) {
@@ -107,12 +186,39 @@ std::vector<EntryWrapper> search(std::string text, int numResults) {
     return ret;
 }
 
+// Suggestion search function (alternative to class-based approach)
+std::vector<EntryWrapper> suggest(std::string text, int numResults) {
+    try {
+        auto suggestionSearcher = zim::SuggestionSearcher(*g_archive);
+        auto suggestionSearch = suggestionSearcher.suggest(text);
+        auto resultSet = suggestionSearch.getResults(0, numResults);
+        std::vector<EntryWrapper> ret;
+        
+        // Use the iterator to get entries
+        for (auto it = resultSet.begin(); it != resultSet.end(); ++it) {
+            try {
+                // Use the iterator's getEntry() method
+                zim::Entry entry = it.getEntry();
+                ret.push_back(EntryWrapper(entry));
+            } catch (const std::exception& e) {
+                std::cout << "Error getting entry from suggestion iterator: " << e.what() << std::endl;
+                // Skip this item and continue
+            }
+        }
+        return ret;
+    } catch(const std::exception& e) {
+        std::cout << "suggestion error: " << e.what() << std::endl;
+        return std::vector<EntryWrapper>();
+    }
+}
+
 // Binding code
 EMSCRIPTEN_BINDINGS(libzim_module) {
     emscripten::function("loadArchive", &loadArchive);
     emscripten::function("getEntryByPath", &getEntryByPath);
     emscripten::function("getArticleCount", &getArticleCount);
     emscripten::function("search", &search);
+    emscripten::function("suggest", &suggest);
     emscripten::register_vector<char>("vector<char>");
     emscripten::register_vector<EntryWrapper>("vector(EntryWrapper)");
     class_<EntryWrapper>("EntryWrapper")
@@ -120,6 +226,7 @@ EMSCRIPTEN_BINDINGS(libzim_module) {
       .function("getPath", &EntryWrapper::getPath)
       .function("isRedirect", &EntryWrapper::isRedirect)
       .function("getRedirectEntry", &EntryWrapper::getRedirectEntry)
+      .function("getTitle", &EntryWrapper::getTitle)
       ;
     class_<ItemWrapper>("ItemWrapper")
       .function("getData", &ItemWrapper::getData)
@@ -127,5 +234,13 @@ EMSCRIPTEN_BINDINGS(libzim_module) {
       ;
     class_<BlobWrapper>("BlobWrapper")
       .function("getContent", &BlobWrapper::getContent)
+      ;
+    class_<SuggestionSearcherWrapper>("SuggestionSearcher")
+      .constructor<>()
+      .function("suggest", &SuggestionSearcherWrapper::suggest)
+      ;
+    class_<SuggestionSearchWrapper>("SuggestionSearch")
+      .function("getEstimatedMatches", &SuggestionSearchWrapper::getEstimatedMatches)
+      .function("getResults", &SuggestionSearchWrapper::getResults)
       ;
 }
