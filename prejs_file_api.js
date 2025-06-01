@@ -101,6 +101,6 @@ self.addEventListener('message', function(e) {
         };
         console.debug('baseZimFileName = ' + baseZimFileName);
         console.debug("Module['arguments'] = " + Module['arguments']);
-    }
-    // File continues in postjs_file_api.js - handles invalid actions and closes the event listener
-    // Between prejs and postjs: Emscripten injects the compiled WebAssembly/asm.js Module code and bindings
+
+        // File continues in postjs_file_api.js - handles invalid actions and closes the event listener
+        // Between prejs and postjs: Emscripten injects the compiled WebAssembly/asm.js Module code and bindings
