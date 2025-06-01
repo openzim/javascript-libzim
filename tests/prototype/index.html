@@ -1,5 +1,5 @@
 <!doctype html>
-    <html>
+<html lang="en">
     <head><meta charset="utf-8"><title>Web Worker + file api zim reader</title></head>
     <body>
         <h1>Prototype to test libzim compiled with emscripten</h1>
@@ -20,6 +20,8 @@
     Search string : <input type="text" id="search" value="Ray">
     <br/>
     <button type="button" id="btnCallSearch">Search</button>
+    <br/>
+    <button type="button" id="btnCallSuggest">Suggest</button>
     <br/>
     <div id="status"></div>
     <br/>
@@ -44,6 +46,9 @@
 
     var btnCallSearch = document.getElementById('btnCallSearch');
     btnCallSearch.addEventListener('click', callSearch, false);
+
+    var btnCallSuggest = document.getElementById('btnCallSuggest');
+    btnCallSuggest.addEventListener('click', callSuggest, false);
 
     control.addEventListener("change", function(event) {
         // When the control has changed, there are new files
@@ -89,6 +94,26 @@
         worker.postMessage({action: "search", text: text}, [tmpMessageChannel.port2]);
     }
 
+    function callSuggest() {
+        var tmpMessageChannel = new MessageChannel();
+        var text = document.getElementById("search").value;
+        var t0 = performance.now();
+        tmpMessageChannel.port1.onmessage = function(event2){
+            var t1 = performance.now();
+            var readTime = Math.round(t1 - t0);
+            var suggestions = event2.data.suggestions;
+            document.getElementById("status").textContent = "Suggest has found " + suggestions.length + " suggestions";
+            var html = "";
+            for (var i=0; i<suggestions.length; i++) {
+                html += suggestions[i].title + " (" + suggestions[i].path + ")<br/>";
+            }
+            window.frames[0].document.body.innerHTML = html;
+            console.log("suggest done by the webworker in " + readTime + " milliseconds", event2);
+        };
+        document.getElementById("status").textContent = "Getting suggestions...";
+        worker.postMessage({action: "suggest", text: text}, [tmpMessageChannel.port2]);
+    }
+
     function callGetContentByPath() {
         var tmpMessageChannel = new MessageChannel();
         var path = document.getElementById("path").value;
@@ -125,6 +150,5 @@
         worker.postMessage({action: "getEntryByPath", path: path, follow: true}, [tmpMessageChannel.port2]);
     }
     </script>
-</body>
-      </html>
-
+    </body>
+</html>
