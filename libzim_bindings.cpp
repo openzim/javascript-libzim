@@ -84,6 +84,9 @@ private:
     zim::Entry m_entry;
 };
 
+// Forward declaration
+class SuggestionSearchWrapper;
+
 // SuggestionSearcher wrapper
 class SuggestionSearcherWrapper {
 public:
@@ -103,8 +106,9 @@ private:
 // SuggestionSearch wrapper
 class SuggestionSearchWrapper {
 public:
-    SuggestionSearchWrapper(zim::SuggestionSearch search)
-        : search_(search) {}
+    // Use move constructor to avoid copy issues
+    SuggestionSearchWrapper(zim::SuggestionSearch&& search)
+        : search_(std::move(search)) {}
     
     unsigned int getEstimatedMatches() const {
         try {
@@ -120,8 +124,16 @@ public:
             zim::SuggestionResultSet resultSet = search_.getResults(start, count);
             std::vector<EntryWrapper> results;
             
-            for (const auto& entry : resultSet) {
-                results.push_back(EntryWrapper(entry));
+            // Use the iterator to get entries
+            for (auto it = resultSet.begin(); it != resultSet.end(); ++it) {
+                try {
+                    // Use the iterator's getEntry() method
+                    zim::Entry entry = it.getEntry();
+                    results.push_back(EntryWrapper(entry));
+                } catch (const std::exception& e) {
+                    std::cout << "Error getting entry from suggestion iterator: " << e.what() << std::endl;
+                    // Skip this item and continue
+                }
             }
             
             return results;
@@ -139,7 +151,8 @@ private:
 SuggestionSearchWrapper SuggestionSearcherWrapper::suggest(const std::string& query) {
     try {
         zim::SuggestionSearch search = searcher->suggest(query);
-        return SuggestionSearchWrapper(search);
+        // Use move constructor
+        return SuggestionSearchWrapper(std::move(search));
     } catch (const std::exception& e) {
         std::cout << "suggest error: " << e.what() << std::endl;
         throw;
@@ -180,8 +193,17 @@ std::vector<EntryWrapper> suggest(std::string text, int numResults) {
         auto suggestionSearch = suggestionSearcher.suggest(text);
         auto resultSet = suggestionSearch.getResults(0, numResults);
         std::vector<EntryWrapper> ret;
-        for(auto entry : resultSet) {
-            ret.push_back(EntryWrapper(entry));
+        
+        // Use the iterator to get entries
+        for (auto it = resultSet.begin(); it != resultSet.end(); ++it) {
+            try {
+                // Use the iterator's getEntry() method
+                zim::Entry entry = it.getEntry();
+                ret.push_back(EntryWrapper(entry));
+            } catch (const std::exception& e) {
+                std::cout << "Error getting entry from suggestion iterator: " << e.what() << std::endl;
+                // Skip this item and continue
+            }
         }
         return ret;
     } catch(const std::exception& e) {
