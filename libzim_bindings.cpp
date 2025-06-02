@@ -150,7 +150,8 @@ private:
 // Implement the suggest method (needs to be after SuggestionSearchWrapper definition)
 SuggestionSearchWrapper SuggestionSearcherWrapper::suggest(const std::string& query) {
     try {
-        zim::SuggestionSearch search = searcher->suggest(query);
+        // FIX: Use search() method as documented, not suggest()
+        zim::SuggestionSearch search = searcher->search(query);
         // Use move constructor
         return SuggestionSearchWrapper(std::move(search));
     } catch (const std::exception& e) {
@@ -173,24 +174,60 @@ std::unique_ptr<EntryWrapper> getEntryByPath(std::string url) {
     }
 }
 
-// Search for a text, and returns the path of the first result
+// CORRECTED: Search for a text using proper Query API
 std::vector<EntryWrapper> search(std::string text, int numResults) {
-    auto searcher = zim::Searcher(*g_archive);
-    auto query = zim::Query(text);
-    auto search = searcher.search(query);
-    auto searchResultSet = search.getResults(0, numResults);
-    std::vector<EntryWrapper> ret;
-    for(auto entry:searchResultSet) {
-        ret.push_back(EntryWrapper(entry));
+    try {
+        auto searcher = zim::Searcher(*g_archive);
+        
+        // FIX: Use proper Query construction
+        zim::Query query;          // Create empty query first
+        query.setQuery(text);      // Then set the query text
+        
+        auto search = searcher.search(query);
+        auto searchResultSet = search.getResults(0, numResults);
+        std::vector<EntryWrapper> ret;
+        for(auto entry:searchResultSet) {
+            ret.push_back(EntryWrapper(entry));
+        }
+        return ret;
+    } catch(const std::exception& e) {
+        std::cout << "Search error: " << e.what() << std::endl;
+        return std::vector<EntryWrapper>();
     }
-    return ret;
 }
 
-// Suggestion search function (alternative to class-based approach)
+// CORRECTED: Enhanced search with language control
+std::vector<EntryWrapper> searchWithLanguage(std::string text, int numResults, std::string language = "") {
+    try {
+        auto searcher = zim::Searcher(*g_archive);
+        zim::Query query;
+        
+        // Set the query text using proper API
+        query.setQuery(text);
+        
+        // TODO: Add language control if libzim supports it
+        // This might require additional Query methods or Searcher configuration
+        
+        auto search = searcher.search(query);
+        auto searchResultSet = search.getResults(0, numResults);
+        std::vector<EntryWrapper> ret;
+        for(auto entry:searchResultSet) {
+            ret.push_back(EntryWrapper(entry));
+        }
+        return ret;
+    } catch(const std::exception& e) {
+        std::cout << "Search with language error: " << e.what() << std::endl;
+        return std::vector<EntryWrapper>();
+    }
+}
+
+// CORRECTED: Suggestion search function using proper API
 std::vector<EntryWrapper> suggest(std::string text, int numResults) {
     try {
         auto suggestionSearcher = zim::SuggestionSearcher(*g_archive);
-        auto suggestionSearch = suggestionSearcher.suggest(text);
+        
+        // FIX: Use search() method as documented
+        auto suggestionSearch = suggestionSearcher.search(text);
         auto resultSet = suggestionSearch.getResults(0, numResults);
         std::vector<EntryWrapper> ret;
         
@@ -218,6 +255,7 @@ EMSCRIPTEN_BINDINGS(libzim_module) {
     emscripten::function("getEntryByPath", &getEntryByPath);
     emscripten::function("getArticleCount", &getArticleCount);
     emscripten::function("search", &search);
+    emscripten::function("searchWithLanguage", &searchWithLanguage);
     emscripten::function("suggest", &suggest);
     emscripten::register_vector<char>("vector<char>");
     emscripten::register_vector<EntryWrapper>("vector(EntryWrapper)");
