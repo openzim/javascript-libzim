@@ -80,12 +80,9 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	# Origin: wget -N --content-disposition https://github.com/openzim/libzim/archive/7.2.2.tar.gz
 	[ ! -f libzim-*.tar.xz ] && wget -N https://download.openzim.org/release/libzim/libzim-9.3.0.tar.xz || true
 	tar xf libzim-*.tar.xz
-	# Apply debug modifications using sed for language investigation (corrected for libzim 9.3.0 structure)
-	sed -i '/auto language = database.get_metadata("language");/a\\n                // DEBUG: Log what we get from ZIM metadata\n                std::cout << "DEBUG: Raw language from database metadata: '" '"'" << language << "'" '"'" << std::endl;' libzim-*/src/search.cpp
-	sed -i '/language = archive.getMetadata("Language");/a\\n                        std::cout << "DEBUG: Fallback language from archive metadata: '" '"'" << language << "'" '"'" << std::endl;' libzim-*/src/search.cpp
-	sed -i '/if (!language.empty()) {/a\\n                std::cout << "DEBUG: Final language value before ICU: '" '"'" << language << "'" '"'" << std::endl;' libzim-*/src/search.cpp
-	sed -i '/icu::Locale languageLocale(language.c_str());/a\\n                    std::cout << "DEBUG: ICU getLanguage() result: '" '"'" << languageLocale.getLanguage() << "'" '"'" << std::endl;\n                    std::cout << "DEBUG: ICU getName() result: '" '"'" << languageLocale.getName() << "'" '"'" << std::endl;' libzim-*/src/search.cpp
-	sed -i 's/m_stemmer = Xapian::Stem(languageLocale.getLanguage());/std::string stemLanguage = languageLocale.getLanguage();\n                        std::cout << "DEBUG: About to create Xapian::Stem with: '" '"'" << stemLanguage << "'" '"'" << std::endl;\n                        m_stemmer = Xapian::Stem(stemLanguage);\n                        std::cout << "DEBUG: Xapian::Stem created successfully" << std::endl;/' libzim-*/src/search.cpp
+	# Apply fix for language metadata whitespace issue that causes Xapian stemming errors
+	sed -i '/auto language = database.get_metadata("language");/a\\n                // Trim whitespace from language metadata to avoid Xapian stemming errors\n                if (!language.empty()) {\n                    language.erase(0, language.find_first_not_of(" \\t\\n\\r\\f\\v"));\n                    language.erase(language.find_last_not_of(" \\t\\n\\r\\f\\v") + 1);\n                }' libzim-*/src/search.cpp
+	sed -i '/language = archive.getMetadata("Language");/a\\n                        // Also trim the fallback language metadata\n                        if (!language.empty()) {\n                            language.erase(0, language.find_first_not_of(" \\t\\n\\r\\f\\v"));\n                            language.erase(language.find_last_not_of(" \\t\\n\\r\\f\\v") + 1);\n                        }' libzim-*/src/search.cpp
 	# It's no use trying to compile examples
 	sed -i -e "s/^subdir('examples')//" libzim-*/meson.build
 	cd libzim-*/ ; PKG_CONFIG_PATH=/src/build/lib/pkgconfig meson --prefix=`pwd`/../build --cross-file=../emscripten-crosscompile.ini . build -DUSE_MMAP=false
