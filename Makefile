@@ -81,7 +81,7 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	[ ! -f libzim-*.tar.xz ] && wget -N https://download.openzim.org/release/libzim/libzim-9.3.0.tar.xz || true
 	tar xf libzim-*.tar.xz
 	# Apply fix for language metadata whitespace issue  
-    cp libzim-*/src/search.cpp libzim-*/src/search.cpp.backup
+	cp libzim-*/src/search.cpp libzim-*/src/search.cpp.backup
 	sed -i 's/auto language = database.get_metadata("language");/auto language = database.get_metadata("language"); language.erase(0, language.find_first_not_of(" \\t\\n\\r\\f\\v")); language.erase(language.find_last_not_of(" \\t\\n\\r\\f\\v") + 1);/' libzim-*/src/search.cpp
 	sed -i 's/language = archive.getMetadata("Language");/language = archive.getMetadata("Language"); language.erase(0, language.find_first_not_of(" \\t\\n\\r\\f\\v")); language.erase(language.find_last_not_of(" \\t\\n\\r\\f\\v") + 1);/' libzim-*/src/search.cpp
 	# It's no use trying to compile examples
