@@ -67,7 +67,8 @@ build/lib/libicudata.so :
 
 build/lib/libxapian.a : build/lib/libz.a
 	# Origin: https://oligarchy.co.uk/xapian/1.4.18/xapian-core-1.4.18.tar.xz
-	[ ! -f xapian-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/xapian-core-1.4.23.tar.xz || true
+	# Also: https://dev.kiwix.org/kiwix-build/xapian-core-1.4.23.tar.xz
+	[ ! -f xapian-*.tar.gz ] && wget -N https://oligarchy.co.uk/xapian/1.4.29/xapian-core-1.4.29.tar.xz || true
 	tar xf xapian-core-*.tar.xz
         # Some options coming from https://github.com/xapian/xapian/tree/master/xapian-core/emscripten
 	# cd xapian-core-1.4.18; emconfigure ./configure --prefix=`pwd`/../build "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" CPPFLAGS='-DFLINTLOCK_USE_FLOCK' CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti' --disable-backend-honey --disable-backend-inmemory --disable-shared --disable-backend-remote
