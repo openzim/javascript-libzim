@@ -41,7 +41,7 @@ build/lib/liblzma.so :
 	
 build/lib/libz.a :
 	# Version not yet available in dev.kiwix.org
-	wget -N https://zlib.net/zlib-1.3.tar.gz
+	wget -N https://zlib.net/zlib-1.3.1.tar.gz
 	tar xf zlib-*.tar.gz
 	cd zlib-*/ ; emconfigure ./configure --prefix=`pwd`/../build
 	cd zlib-*/ ; emmake make
