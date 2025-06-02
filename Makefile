@@ -80,22 +80,22 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	# Origin: wget -N --content-disposition https://github.com/openzim/libzim/archive/7.2.2.tar.gz
 	[ ! -f libzim-*.tar.xz ] && wget -N https://download.openzim.org/release/libzim/libzim-9.3.0.tar.xz || true
 	tar xf libzim-*.tar.xz
-	# Apply debug and whitespace fix - using block comments and careful placement
+	# Apply debug and whitespace fix - CORRECTED ESCAPING (double backslash, not quadruple)
 	sed -i '/auto language = database.get_metadata("language");/a\
                 /* DEBUG: Log what we get from ZIM metadata */\
                 std::cout << "DEBUG: Raw language from database metadata: " << language << std::endl;\
                 /* Trim whitespace from language metadata to avoid Xapian stemming errors */\
                 if (!language.empty()) {\
-                    language.erase(0, language.find_first_not_of(" \\\\t\\\\n\\\\r\\\\f\\\\v"));\
-                    language.erase(language.find_last_not_of(" \\\\t\\\\n\\\\r\\\\f\\\\v") + 1);\
+                    language.erase(0, language.find_first_not_of(" \\t\\n\\r\\f\\v"));\
+                    language.erase(language.find_last_not_of(" \\t\\n\\r\\f\\v") + 1);\
                 }\
                 std::cout << "DEBUG: Language after trimming: " << language << std::endl;' libzim-*/src/search.cpp
 	sed -i '/language = archive.getMetadata("Language");/a\
                         std::cout << "DEBUG: Fallback language from archive metadata: " << language << std::endl;\
                         /* Also trim the fallback language metadata */\
                         if (!language.empty()) {\
-                            language.erase(0, language.find_first_not_of(" \\\\t\\\\n\\\\r\\\\f\\\\v"));\
-                            language.erase(language.find_last_not_of(" \\\\t\\\\n\\\\r\\\\f\\\\v") + 1);\
+                            language.erase(0, language.find_first_not_of(" \\t\\n\\r\\f\\v"));\
+                            language.erase(language.find_last_not_of(" \\t\\n\\r\\f\\v") + 1);\
                         }\
                         std::cout << "DEBUG: Fallback language after trimming: " << language << std::endl;' libzim-*/src/search.cpp
 	sed -i '/icu::Locale languageLocale(language.c_str());/a\
