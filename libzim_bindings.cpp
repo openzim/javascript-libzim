@@ -150,8 +150,8 @@ private:
 // Implement the suggest method (needs to be after SuggestionSearchWrapper definition)
 SuggestionSearchWrapper SuggestionSearcherWrapper::suggest(const std::string& query) {
     try {
-        // FIX: Use search() method as documented, not suggest()
-        zim::SuggestionSearch search = searcher->search(query);
+        // Use suggest() method
+        zim::SuggestionSearch search = searcher->suggest(query);
         // Use move constructor
         return SuggestionSearchWrapper(std::move(search));
     } catch (const std::exception& e) {
@@ -174,7 +174,7 @@ std::unique_ptr<EntryWrapper> getEntryByPath(std::string url) {
     }
 }
 
-// CORRECTED: Search for a text using proper Query API
+// Search for a text using proper Query API
 std::vector<EntryWrapper> search(std::string text, int numResults) {
     try {
         auto searcher = zim::Searcher(*g_archive);
@@ -196,7 +196,7 @@ std::vector<EntryWrapper> search(std::string text, int numResults) {
     }
 }
 
-// CORRECTED: Enhanced search with language control
+// Enhanced search with language control
 std::vector<EntryWrapper> searchWithLanguage(std::string text, int numResults, std::string language = "") {
     try {
         auto searcher = zim::Searcher(*g_archive);
@@ -221,13 +221,13 @@ std::vector<EntryWrapper> searchWithLanguage(std::string text, int numResults, s
     }
 }
 
-// CORRECTED: Suggestion search function using proper API
+// Suggestion search function using proper API
 std::vector<EntryWrapper> suggest(std::string text, int numResults) {
     try {
         auto suggestionSearcher = zim::SuggestionSearcher(*g_archive);
         
-        // FIX: Use search() method as documented
-        auto suggestionSearch = suggestionSearcher.search(text);
+        // Use suggest() method
+        auto suggestionSearch = suggestionSearcher.suggest(text);
         auto resultSet = suggestionSearch.getResults(0, numResults);
         std::vector<EntryWrapper> ret;
         
