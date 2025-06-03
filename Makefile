@@ -80,14 +80,19 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	# Origin: wget -N --content-disposition https://github.com/openzim/libzim/archive/7.2.2.tar.gz
 	[ ! -f libzim-*.tar.xz ] && wget -N https://download.openzim.org/release/libzim/libzim-9.3.0.tar.xz || true
 	tar xf libzim-*.tar.xz
-	@echo "=== APPLYING ULTRA-SIMPLE LIBZIM PATCHES ==="
-	# SEARCH.CPP - Just fix the one problematic line, leave everything else alone
-	sed -i 's/m_stemmer = Xapian::Stem(languageLocale.getLanguage());/try { m_stemmer = Xapian::Stem(languageLocale.getLanguage()); } catch (...) { m_stemmer = Xapian::Stem("none"); }/' libzim-*/src/search.cpp
-	# SUGGESTION.CPP - Just fix the one problematic line, leave everything else alone  
-	sed -i 's/m_stemmer = Xapian::Stem(languageLocale.getLanguage());/try { m_stemmer = Xapian::Stem(languageLocale.getLanguage()); } catch (...) { m_stemmer = Xapian::Stem("none"); }/' libzim-*/src/suggestion.cpp
+	@echo "=== APPLYING WHITELIST-BASED LIBZIM PATCHES ==="
+	# Add required header for std::set
+	sed -i '/#include <unicode\/locid.h>/a #include <set>' libzim-*/src/search.cpp
+	sed -i '/#include <unicode\/locid.h>/a #include <set>' libzim-*/src/suggestion.cpp
+	# SEARCH.CPP - Whitelist all Xapian-supported languages, use 'none' for all others
+	sed -i 's/m_stemmer = Xapian::Stem(languageLocale.getLanguage());/{ std::string stemLang = languageLocale.getLanguage(); static const std::set<std::string> supportedLangs = {"ar", "hy", "eu", "ca", "da", "nl", "en", "fi", "fr", "de", "el", "hi", "hu", "id", "ga", "it", "lt", "ne", "no", "pt", "ro", "ru", "sr", "es", "sv", "tr"}; if (supportedLangs.find(stemLang) != supportedLangs.end()) { m_stemmer = Xapian::Stem(stemLang); } else { m_stemmer = Xapian::Stem("none"); } }/' libzim-*/src/search.cpp
+	# SUGGESTION.CPP - Whitelist all Xapian-supported languages, use 'none' for all others
+	sed -i 's/m_stemmer = Xapian::Stem(languageLocale.getLanguage());/{ std::string stemLang = languageLocale.getLanguage(); static const std::set<std::string> supportedLangs = {"ar", "hy", "eu", "ca", "da", "nl", "en", "fi", "fr", "de", "el", "hi", "hu", "id", "ga", "it", "lt", "ne", "no", "pt", "ro", "ru", "sr", "es", "sv", "tr"}; if (supportedLangs.find(stemLang) != supportedLangs.end()) { m_stemmer = Xapian::Stem(stemLang); } else { m_stemmer = Xapian::Stem("none"); } }/' libzim-*/src/suggestion.cpp
 	@echo "=== VERIFYING PATCHES APPLIED ==="
-	@echo "search.cpp - Stemmer line replaced: $$(grep -c 'try { m_stemmer = Xapian::Stem' libzim-*/src/search.cpp || echo '0')"
-	@echo "suggestion.cpp - Stemmer line replaced: $$(grep -c 'try { m_stemmer = Xapian::Stem' libzim-*/src/suggestion.cpp || echo '0')"
+	@echo "search.cpp - Headers added: $$(grep -c '#include <set>' libzim-*/src/search.cpp || echo '0')"
+	@echo "suggestion.cpp - Headers added: $$(grep -c '#include <set>' libzim-*/src/suggestion.cpp || echo '0')"
+	@echo "search.cpp - Whitelist added: $$(grep -c 'supportedLangs' libzim-*/src/search.cpp || echo '0')"
+	@echo "suggestion.cpp - Whitelist added: $$(grep -c 'supportedLangs' libzim-*/src/suggestion.cpp || echo '0')"
 	# It's no use trying to compile examples
 	sed -i -e "s/^subdir('examples')//" libzim-*/meson.build
 	cd libzim-*/ ; PKG_CONFIG_PATH=/src/build/lib/pkgconfig meson --prefix=`pwd`/../build --cross-file=../emscripten-crosscompile.ini . build -DUSE_MMAP=false
