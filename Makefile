@@ -105,6 +105,9 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
                         std::cout << "DEBUG: About to create Xapian::Stem with: " << stemLanguage << std::endl;\
                         m_stemmer = Xapian::Stem(stemLanguage);\
                         std::cout << "DEBUG: Xapian::Stem created successfully" << std::endl;/' libzim-*/src/search.cpp
+	# NEW FIXES: Fix variable bug and add Xapian fallback
+	sed -i 's/icu::Locale languageLocale(language\.c_str());/icu::Locale languageLocale(m_language.c_str());/' libzim-*/src/search.cpp
+	sed -i 's/m_stemmer = Xapian::Stem(stemLanguage);/try { m_stemmer = Xapian::Stem(stemLanguage); } catch (...) { std::cout << "DEBUG: No stemming for language: " << stemLanguage << ", using fallback" << std::endl; m_stemmer = Xapian::Stem("none"); }/' libzim-*/src/search.cpp
 	# It's no use trying to compile examples
 	sed -i -e "s/^subdir('examples')//" libzim-*/meson.build
 	cd libzim-*/ ; PKG_CONFIG_PATH=/src/build/lib/pkgconfig meson --prefix=`pwd`/../build --cross-file=../emscripten-crosscompile.ini . build -DUSE_MMAP=false
