@@ -80,59 +80,14 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	# Origin: wget -N --content-disposition https://github.com/openzim/libzim/archive/7.2.2.tar.gz
 	[ ! -f libzim-*.tar.xz ] && wget -N https://download.openzim.org/release/libzim/libzim-9.3.0.tar.xz || true
 	tar xf libzim-*.tar.xz
-	@echo "=== APPLYING MINIMAL SURGICAL LIBZIM PATCHES ==="
-	# SEARCH.CPP - Simple targeted fixes
-	# 1. Add language trimming after getting metadata
-	sed -i '/auto language = database.get_metadata("language");/a\
-                /* Trim whitespace from language metadata */\
-                if (!language.empty()) {\
-                    language.erase(0, language.find_first_not_of(" \\t\\n\\r\\f\\v"));\
-                    language.erase(language.find_last_not_of(" \\t\\n\\r\\f\\v") + 1);\
-                }' libzim-*/src/search.cpp
-	# 2. Add fallback language trimming  
-	sed -i '/language = archive.getMetadata("Language");/a\
-                        /* Also trim the fallback language metadata */\
-                        if (!language.empty()) {\
-                            language.erase(0, language.find_first_not_of(" \\t\\n\\r\\f\\v"));\
-                            language.erase(language.find_last_not_of(" \\t\\n\\r\\f\\v") + 1);\
-                        }' libzim-*/src/search.cpp
-	# 3. Replace the problematic stemmer line with safe version
-	sed -i 's/m_stemmer = Xapian::Stem(languageLocale.getLanguage());/try {\
-                            m_stemmer = Xapian::Stem(languageLocale.getLanguage());\
-                            m_queryParser.set_stemmer(m_stemmer);\
-                            m_queryParser.set_stemming_strategy(Xapian::QueryParser::STEM_ALL);\
-                        } catch (...) {\
-                            m_stemmer = Xapian::Stem("none");\
-                            m_queryParser.set_stemmer(m_stemmer);\
-                        }/' libzim-*/src/search.cpp
-	# SUGGESTION.CPP - Simple targeted fixes
-	# 1. Add language trimming after getting metadata
-	sed -i '/auto language = database.get_metadata("language");/a\
-  /* Trim whitespace from language metadata */\
-  if (!language.empty()) {\
-      language.erase(0, language.find_first_not_of(" \\t\\n\\r\\f\\v"));\
-      language.erase(language.find_last_not_of(" \\t\\n\\r\\f\\v") + 1);\
-  }' libzim-*/src/suggestion.cpp
-	# 2. Add fallback language trimming
-	sed -i '/language = m_archive.getMetadata("Language");/a\
-          /* Also trim the fallback language metadata */\
-          if (!language.empty()) {\
-              language.erase(0, language.find_first_not_of(" \\t\\n\\r\\f\\v"));\
-              language.erase(language.find_last_not_of(" \\t\\n\\r\\f\\v") + 1);\
-          }' libzim-*/src/suggestion.cpp
-	# 3. Replace the problematic stemmer line with safe version
-	sed -i 's/m_stemmer = Xapian::Stem(languageLocale.getLanguage());/try {\
-              m_stemmer = Xapian::Stem(languageLocale.getLanguage());\
-              m_queryParser.set_stemmer(m_stemmer);\
-          } catch (...) {\
-              m_stemmer = Xapian::Stem("none");\
-              m_queryParser.set_stemmer(m_stemmer);\
-          }/' libzim-*/src/suggestion.cpp
-	@echo "=== VERIFYING MINIMAL PATCHES APPLIED ==="
-	@echo "search.cpp - Trimming added: $$(grep -c 'erase.*find_first_not_of' libzim-*/src/search.cpp || echo '0')"
-	@echo "suggestion.cpp - Trimming added: $$(grep -c 'erase.*find_first_not_of' libzim-*/src/suggestion.cpp || echo '0')"
-	@echo "search.cpp - Try-catch added: $$(grep -c 'catch.*{' libzim-*/src/search.cpp || echo '0')"
-	@echo "suggestion.cpp - Try-catch added: $$(grep -c 'catch.*{' libzim-*/src/suggestion.cpp || echo '0')"
+	@echo "=== APPLYING ULTRA-SIMPLE LIBZIM PATCHES ==="
+	# SEARCH.CPP - Just fix the one problematic line, leave everything else alone
+	sed -i 's/m_stemmer = Xapian::Stem(languageLocale.getLanguage());/try { m_stemmer = Xapian::Stem(languageLocale.getLanguage()); } catch (...) { m_stemmer = Xapian::Stem("none"); }/' libzim-*/src/search.cpp
+	# SUGGESTION.CPP - Just fix the one problematic line, leave everything else alone  
+	sed -i 's/m_stemmer = Xapian::Stem(languageLocale.getLanguage());/try { m_stemmer = Xapian::Stem(languageLocale.getLanguage()); } catch (...) { m_stemmer = Xapian::Stem("none"); }/' libzim-*/src/suggestion.cpp
+	@echo "=== VERIFYING PATCHES APPLIED ==="
+	@echo "search.cpp - Stemmer line replaced: $$(grep -c 'try { m_stemmer = Xapian::Stem' libzim-*/src/search.cpp || echo '0')"
+	@echo "suggestion.cpp - Stemmer line replaced: $$(grep -c 'try { m_stemmer = Xapian::Stem' libzim-*/src/suggestion.cpp || echo '0')"
 	# It's no use trying to compile examples
 	sed -i -e "s/^subdir('examples')//" libzim-*/meson.build
 	cd libzim-*/ ; PKG_CONFIG_PATH=/src/build/lib/pkgconfig meson --prefix=`pwd`/../build --cross-file=../emscripten-crosscompile.ini . build -DUSE_MMAP=false
