@@ -90,7 +90,7 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
                     language.erase(language.find_last_not_of(" \\t\\n\\r\\f\\v") + 1);\
                 }\
                 std::cout << "DEBUG: Language after trimming: \\"" << language << "\\"" << std::endl;' libzim-*/src/search.cpp
-    sed -i '/language = archive.getMetadata("Language");/a\
+	sed -i '/language = archive.getMetadata("Language");/a\
                         std::cout << "DEBUG: Fallback language from archive metadata: \\"" << language << "\\"" << std::endl;\
                         /* Also trim the fallback language metadata */\
                         if (!language.empty()) {\
@@ -98,10 +98,10 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
                             language.erase(language.find_last_not_of(" \\t\\n\\r\\f\\v") + 1);\
                         }\
                         std::cout << "DEBUG: Fallback language after trimming: \\"" << language << "\\"" << std::endl;' libzim-*/src/search.cpp
-    sed -i '/icu::Locale languageLocale(language.c_str());/a\
+	sed -i '/icu::Locale languageLocale(language.c_str());/a\
                     std::cout << "DEBUG: ICU getLanguage() result: \\"" << languageLocale.getLanguage() << "\\"" << std::endl;\
                     std::cout << "DEBUG: ICU getName() result: \\"" << languageLocale.getName() << "\\"" << std::endl;' libzim-*/src/search.cpp
-    sed -i 's/m_stemmer = Xapian::Stem(languageLocale.getLanguage());/std::string stemLanguage = languageLocale.getLanguage();\
+	sed -i 's/m_stemmer = Xapian::Stem(languageLocale.getLanguage());/std::string stemLanguage = languageLocale.getLanguage();\
                         std::cout << "DEBUG: About to create Xapian::Stem with: \\"" << stemLanguage << "\\"" << std::endl;\
                         m_stemmer = Xapian::Stem(stemLanguage);\
                         std::cout << "DEBUG: Xapian::Stem created successfully" << std::endl;/' libzim-*/src/search.cpp
