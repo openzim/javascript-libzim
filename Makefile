@@ -83,32 +83,30 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	# Apply debug and whitespace fix - CORRECTED ESCAPING (double backslash, not quadruple)
 	sed -i '/auto language = database.get_metadata("language");/a\
                 /* DEBUG: Log what we get from ZIM metadata */\
-                std::cout << "DEBUG: Raw language from database metadata: " << language << std::endl;\
+                std::cout << "DEBUG: Raw language from database metadata: \\"" << language << "\\"" << std::endl;\
                 /* Trim whitespace from language metadata to avoid Xapian stemming errors */\
                 if (!language.empty()) {\
                     language.erase(0, language.find_first_not_of(" \\t\\n\\r\\f\\v"));\
                     language.erase(language.find_last_not_of(" \\t\\n\\r\\f\\v") + 1);\
                 }\
-                std::cout << "DEBUG: Language after trimming: " << language << std::endl;' libzim-*/src/search.cpp
-	sed -i '/language = archive.getMetadata("Language");/a\
-                        std::cout << "DEBUG: Fallback language from archive metadata: " << language << std::endl;\
+                std::cout << "DEBUG: Language after trimming: \\"" << language << "\\"" << std::endl;' libzim-*/src/search.cpp
+    sed -i '/language = archive.getMetadata("Language");/a\
+                        std::cout << "DEBUG: Fallback language from archive metadata: \\"" << language << "\\"" << std::endl;\
                         /* Also trim the fallback language metadata */\
                         if (!language.empty()) {\
                             language.erase(0, language.find_first_not_of(" \\t\\n\\r\\f\\v"));\
                             language.erase(language.find_last_not_of(" \\t\\n\\r\\f\\v") + 1);\
                         }\
-                        std::cout << "DEBUG: Fallback language after trimming: " << language << std::endl;' libzim-*/src/search.cpp
-	sed -i '/icu::Locale languageLocale(language.c_str());/a\
-                    std::cout << "DEBUG: ICU getLanguage() result: " << languageLocale.getLanguage() << std::endl;\
-                    std::cout << "DEBUG: ICU getName() result: " << languageLocale.getName() << std::endl;' libzim-*/src/search.cpp
-	sed -i 's/m_stemmer = Xapian::Stem(languageLocale.getLanguage());/std::string stemLanguage = languageLocale.getLanguage();\
-                        std::cout << "DEBUG: About to create Xapian::Stem with: " << stemLanguage << std::endl;\
+                        std::cout << "DEBUG: Fallback language after trimming: \\"" << language << "\\"" << std::endl;' libzim-*/src/search.cpp
+    sed -i '/icu::Locale languageLocale(language.c_str());/a\
+                    std::cout << "DEBUG: ICU getLanguage() result: \\"" << languageLocale.getLanguage() << "\\"" << std::endl;\
+                    std::cout << "DEBUG: ICU getName() result: \\"" << languageLocale.getName() << "\\"" << std::endl;' libzim-*/src/search.cpp
+    sed -i 's/m_stemmer = Xapian::Stem(languageLocale.getLanguage());/std::string stemLanguage = languageLocale.getLanguage();\
+                        std::cout << "DEBUG: About to create Xapian::Stem with: \\"" << stemLanguage << "\\"" << std::endl;\
                         m_stemmer = Xapian::Stem(stemLanguage);\
                         std::cout << "DEBUG: Xapian::Stem created successfully" << std::endl;/' libzim-*/src/search.cpp
-	# NEW FIXES: Fix variable bug and add Xapian fallback
-	sed -i '/XapianDbMetadata::XapianDbMetadata/,/^}/ s/icu::Locale languageLocale(language\.c_str());/icu::Locale languageLocale(m_language.c_str());/' libzim-*/src/search.cpp
-	# Fix InternalDataBase stemmer usage (where actual crash occurs)
-	sed -i 's/m_queryParser.set_stemmer(m_metadata.m_stemmer);/try { m_queryParser.set_stemmer(m_metadata.m_stemmer); std::cout << "DEBUG: Stemmer set successfully" << std::endl; } catch (...) { std::cout << "DEBUG: Stemmer failed, using none" << std::endl; m_queryParser.set_stemmer(Xapian::Stem("none")); }/' libzim-*/src/search.cpp
+	# Fix libzim 9.3.0 stemmer fallback - add proper fallback stemmer to existing catch block
+	sed -i 's/std::cout << "No stemming for language .*/std::cout << "DEBUG: Stemmer failed for language: \\"" << languageLocale.getLanguage() << "\\", using fallback" << std::endl;                        m_stemmer = Xapian::Stem("none");                        m_queryParser.set_stemmer(m_stemmer);/' libzim-*/src/search.cpp
 	# It's no use trying to compile examples
 	sed -i -e "s/^subdir('examples')//" libzim-*/meson.build
 	cd libzim-*/ ; PKG_CONFIG_PATH=/src/build/lib/pkgconfig meson --prefix=`pwd`/../build --cross-file=../emscripten-crosscompile.ini . build -DUSE_MMAP=false
