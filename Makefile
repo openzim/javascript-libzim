@@ -41,7 +41,7 @@ build/lib/liblzma.so :
 	
 build/lib/libz.a :
 	# Version not yet available in dev.kiwix.org
-	wget -N https://zlib.net/zlib-1.3.tar.gz
+	wget -N https://zlib.net/zlib-1.3.1.tar.gz
 	tar xf zlib-*.tar.gz
 	cd zlib-*/ ; emconfigure ./configure --prefix=`pwd`/../build
 	cd zlib-*/ ; emmake make
@@ -67,18 +67,32 @@ build/lib/libicudata.so :
 
 build/lib/libxapian.a : build/lib/libz.a
 	# Origin: https://oligarchy.co.uk/xapian/1.4.18/xapian-core-1.4.18.tar.xz
-	[ ! -f xapian-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/xapian-core-1.4.23.tar.xz || true
+	# Also: https://dev.kiwix.org/kiwix-build/xapian-core-1.4.23.tar.xz
+	[ ! -f xapian-*.tar.gz ] && wget -N https://oligarchy.co.uk/xapian/1.4.29/xapian-core-1.4.29.tar.xz || true
 	tar xf xapian-core-*.tar.xz
         # Some options coming from https://github.com/xapian/xapian/tree/master/xapian-core/emscripten
 	# cd xapian-core-1.4.18; emconfigure ./configure --prefix=`pwd`/../build "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" CPPFLAGS='-DFLINTLOCK_USE_FLOCK' CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti' --disable-backend-honey --disable-backend-inmemory --disable-shared --disable-backend-remote
 	cd xapian-core-*/ ; emconfigure ./configure --prefix=`pwd`/../build "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" --disable-shared --disable-backend-remote
-	cd xapian-core-*/ ; emmake make "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib -std=c++14" "CXXFLAGS="-I`pwd`/../build/include -L`pwd`/../build/lib -std=c++14"
+	cd xapian-core-*/ ; emmake make "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib -std=c++14" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib -std=c++14"
 	cd xapian-core-*/ ; emmake make install
 
 build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a build/lib/libicudata.so build/lib/libxapian.a
 	# Origin: wget -N --content-disposition https://github.com/openzim/libzim/archive/7.2.2.tar.gz
-	[ ! -f libzim-*.tar.xz ] && wget -N https://download.openzim.org/release/libzim/libzim-9.0.0.tar.xz || true
+	[ ! -f libzim-*.tar.xz ] && wget -N https://download.openzim.org/release/libzim/libzim-9.3.0.tar.xz || true
 	tar xf libzim-*.tar.xz
+	@echo "=== APPLYING WHITELIST-BASED LIBZIM PATCHES ==="
+	# Add required header for std::set
+	sed -i '/#include <unicode\/locid.h>/a #include <set>' libzim-*/src/search.cpp
+	sed -i '/#include <unicode\/locid.h>/a #include <set>' libzim-*/src/suggestion.cpp
+	# SEARCH.CPP - Whitelist all Xapian-supported languages, use 'none' for all others
+	sed -i 's/m_stemmer = Xapian::Stem(languageLocale.getLanguage());/{ std::string stemLang = languageLocale.getLanguage(); static const std::set<std::string> supportedLangs = {"ar", "hy", "eu", "ca", "da", "nl", "en", "fi", "fr", "de", "el", "hi", "hu", "id", "ga", "it", "lt", "ne", "no", "pt", "ro", "ru", "sr", "es", "sv", "tr"}; if (supportedLangs.find(stemLang) != supportedLangs.end()) { m_stemmer = Xapian::Stem(stemLang); } else { m_stemmer = Xapian::Stem("none"); } }/' libzim-*/src/search.cpp
+	# SUGGESTION.CPP - Whitelist all Xapian-supported languages, use 'none' for all others
+	sed -i 's/m_stemmer = Xapian::Stem(languageLocale.getLanguage());/{ std::string stemLang = languageLocale.getLanguage(); static const std::set<std::string> supportedLangs = {"ar", "hy", "eu", "ca", "da", "nl", "en", "fi", "fr", "de", "el", "hi", "hu", "id", "ga", "it", "lt", "ne", "no", "pt", "ro", "ru", "sr", "es", "sv", "tr"}; if (supportedLangs.find(stemLang) != supportedLangs.end()) { m_stemmer = Xapian::Stem(stemLang); } else { m_stemmer = Xapian::Stem("none"); } }/' libzim-*/src/suggestion.cpp
+	@echo "=== VERIFYING PATCHES APPLIED ==="
+	@echo "search.cpp - Headers added: $$(grep -c '#include <set>' libzim-*/src/search.cpp || echo '0')"
+	@echo "suggestion.cpp - Headers added: $$(grep -c '#include <set>' libzim-*/src/suggestion.cpp || echo '0')"
+	@echo "search.cpp - Whitelist added: $$(grep -c 'supportedLangs' libzim-*/src/search.cpp || echo '0')"
+	@echo "suggestion.cpp - Whitelist added: $$(grep -c 'supportedLangs' libzim-*/src/suggestion.cpp || echo '0')"
 	# It's no use trying to compile examples
 	sed -i -e "s/^subdir('examples')//" libzim-*/meson.build
 	cd libzim-*/ ; PKG_CONFIG_PATH=/src/build/lib/pkgconfig meson --prefix=`pwd`/../build --cross-file=../emscripten-crosscompile.ini . build -DUSE_MMAP=false
