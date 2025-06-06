@@ -84,6 +84,70 @@ private:
     zim::Entry m_entry;
 };
 
+// NEW: SearchIterator wrapper with snippet support
+class SearchIteratorWrapper {
+public:
+    SearchIteratorWrapper(zim::SearchIterator iterator)
+        : m_iterator(iterator) {}
+    
+    std::string getPath() const {
+        try {
+            return m_iterator.getPath();
+        } catch (const std::exception& e) {
+            std::cout << "SearchIterator getPath error: " << e.what() << std::endl;
+            return "";
+        }
+    }
+    
+    std::string getTitle() const {
+        try {
+            return m_iterator.getTitle();
+        } catch (const std::exception& e) {
+            std::cout << "SearchIterator getTitle error: " << e.what() << std::endl;
+            return "";
+        }
+    }
+    
+    std::string getSnippet() const {
+        try {
+            return m_iterator.getSnippet();
+        } catch (const std::exception& e) {
+            std::cout << "SearchIterator getSnippet error: " << e.what() << std::endl;
+            return "";
+        }
+    }
+    
+    int getScore() const {
+        try {
+            return m_iterator.getScore();
+        } catch (const std::exception& e) {
+            std::cout << "SearchIterator getScore error: " << e.what() << std::endl;
+            return 0;
+        }
+    }
+    
+    int getWordCount() const {
+        try {
+            return m_iterator.getWordCount();
+        } catch (const std::exception& e) {
+            std::cout << "SearchIterator getWordCount error: " << e.what() << std::endl;
+            return 0;
+        }
+    }
+    
+    EntryWrapper getEntry() const {
+        try {
+            return EntryWrapper(zim::Entry(m_iterator));
+        } catch (const std::exception& e) {
+            std::cout << "SearchIterator getEntry error: " << e.what() << std::endl;
+            throw;
+        }
+    }
+
+private:
+    zim::SearchIterator m_iterator;
+};
+
 // Forward declaration
 class SuggestionSearchWrapper;
 
@@ -196,6 +260,31 @@ std::vector<EntryWrapper> search(std::string text, int numResults) {
     }
 }
 
+// NEW: Enhanced search with snippets
+std::vector<SearchIteratorWrapper> searchWithSnippets(std::string text, int numResults) {
+    try {
+        auto searcher = zim::Searcher(*g_archive);
+        
+        // Create query
+        zim::Query query;
+        query.setQuery(text);
+        
+        // Perform search
+        auto search = searcher.search(query);
+        auto searchResultSet = search.getResults(0, numResults);
+        
+        // Extract results with snippet support
+        std::vector<SearchIteratorWrapper> ret;
+        for(auto it = searchResultSet.begin(); it != searchResultSet.end(); ++it) {
+            ret.push_back(SearchIteratorWrapper(it));
+        }
+        return ret;
+    } catch(const std::exception& e) {
+        std::cout << "Search with snippets error: " << e.what() << std::endl;
+        return std::vector<SearchIteratorWrapper>();
+    }
+}
+
 // Enhanced search with language control
 std::vector<EntryWrapper> searchWithLanguage(std::string text, int numResults, std::string language = "") {
     try {
@@ -255,10 +344,12 @@ EMSCRIPTEN_BINDINGS(libzim_module) {
     emscripten::function("getEntryByPath", &getEntryByPath);
     emscripten::function("getArticleCount", &getArticleCount);
     emscripten::function("search", &search);
+    emscripten::function("searchWithSnippets", &searchWithSnippets);
     emscripten::function("searchWithLanguage", &searchWithLanguage);
     emscripten::function("suggest", &suggest);
     emscripten::register_vector<char>("vector<char>");
     emscripten::register_vector<EntryWrapper>("vector(EntryWrapper)");
+    emscripten::register_vector<SearchIteratorWrapper>("vector(SearchIteratorWrapper)");
     class_<EntryWrapper>("EntryWrapper")
       .function("getItem", &EntryWrapper::getItem)
       .function("getPath", &EntryWrapper::getPath)
@@ -272,6 +363,14 @@ EMSCRIPTEN_BINDINGS(libzim_module) {
       ;
     class_<BlobWrapper>("BlobWrapper")
       .function("getContent", &BlobWrapper::getContent)
+      ;
+    class_<SearchIteratorWrapper>("SearchIteratorWrapper")
+      .function("getPath", &SearchIteratorWrapper::getPath)
+      .function("getTitle", &SearchIteratorWrapper::getTitle)
+      .function("getSnippet", &SearchIteratorWrapper::getSnippet)
+      .function("getScore", &SearchIteratorWrapper::getScore)
+      .function("getWordCount", &SearchIteratorWrapper::getWordCount)
+      .function("getEntry", &SearchIteratorWrapper::getEntry)
       ;
     class_<SuggestionSearcherWrapper>("SuggestionSearcher")
       .constructor<>()
