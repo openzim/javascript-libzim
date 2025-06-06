@@ -23,6 +23,8 @@
     <br/>
     <button type="button" id="btnCallSuggest">Suggest</button>
     <br/>
+    <button type="button" id="btnCallSuggestWithSnippets">Suggest with snippets</button>
+    <br/>
     <div id="status"></div>
     <br/>
     <iframe id="iframeResult" style="width:100%; height:400px">
@@ -49,6 +51,9 @@
 
     var btnCallSuggest = document.getElementById('btnCallSuggest');
     btnCallSuggest.addEventListener('click', callSuggest, false);
+
+    var btnCallSuggestWithSnippets = document.getElementById('btnCallSuggestWithSnippets');
+    btnCallSuggestWithSnippets.addEventListener('click', callSuggestWithSnippets, false);
 
     control.addEventListener("change", function(event) {
         // When the control has changed, there are new files
@@ -114,6 +119,51 @@
         worker.postMessage({action: "suggest", text: text}, [tmpMessageChannel.port2]);
     }
 
+    function callSuggestWithSnippets() {
+        var tmpMessageChannel = new MessageChannel();
+        var text = document.getElementById("search").value;
+        var t0 = performance.now();
+        tmpMessageChannel.port1.onmessage = function(event2){
+            var t1 = performance.now();
+            var readTime = Math.round(t1 - t0);
+            var suggestions = event2.data.suggestions;
+            document.getElementById("status").textContent = "Suggest with snippets has found " + suggestions.length + " suggestions";
+            
+            // Create nicely formatted HTML with snippets
+            var html = "<style>";
+            html += "body { font-family: Arial, sans-serif; margin: 10px; }";
+            html += ".suggestion { margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }";
+            html += ".title { font-weight: bold; color: #007bff; font-size: 16px; margin-bottom: 4px; }";
+            html += ".path { font-size: 12px; color: #666; margin-bottom: 6px; }";
+            html += ".snippet { font-size: 14px; color: #333; background-color: #f8f9fa; padding: 8px; border-radius: 3px; border-left: 3px solid #007bff; }";
+            html += ".no-snippet { font-style: italic; color: #999; }";
+            html += "</style>";
+            
+            for (var i=0; i<suggestions.length; i++) {
+                var suggestion = suggestions[i];
+                html += "<div class='suggestion'>";
+                html += "<div class='title'>" + escapeHtml(suggestion.title) + "</div>";
+                html += "<div class='path'>" + escapeHtml(suggestion.path) + "</div>";
+                
+                if (suggestion.hasSnippet && suggestion.snippet) {
+                    html += "<div class='snippet'>" + escapeHtml(suggestion.snippet) + "</div>";
+                } else {
+                    html += "<div class='no-snippet'>No snippet available</div>";
+                }
+                html += "</div>";
+            }
+            
+            if (suggestions.length === 0) {
+                html += "<div style='text-align: center; color: #666; font-style: italic; padding: 20px;'>No suggestions found</div>";
+            }
+            
+            window.frames[0].document.body.innerHTML = html;
+            console.log("suggest with snippets done by the webworker in " + readTime + " milliseconds", event2);
+        };
+        document.getElementById("status").textContent = "Getting suggestions with snippets...";
+        worker.postMessage({action: "suggestWithSnippets", text: text, numResults: 10}, [tmpMessageChannel.port2]);
+    }
+
     function callGetContentByPath() {
         var tmpMessageChannel = new MessageChannel();
         var path = document.getElementById("path").value;
@@ -148,6 +198,13 @@
         };
         document.getElementById("status").textContent = "Reading content for path " + path;
         worker.postMessage({action: "getEntryByPath", path: path, follow: true}, [tmpMessageChannel.port2]);
+    }
+
+    // Utility function to escape HTML to prevent XSS and display issues
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
     </script>
     </body>

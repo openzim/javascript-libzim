@@ -84,6 +84,32 @@ private:
     zim::Entry m_entry;
 };
 
+// NEW: SuggestionItemWrapper class to expose snippet functionality
+class SuggestionItemWrapper {
+public:
+    SuggestionItemWrapper(const zim::SuggestionItem& item)
+        : m_item(item) {}
+
+    std::string getTitle() const {
+        return m_item.getTitle();
+    }
+    
+    std::string getPath() const {
+        return m_item.getPath();
+    }
+    
+    std::string getSnippet() const {
+        return m_item.getSnippet();
+    }
+    
+    bool hasSnippet() const {
+        return m_item.hasSnippet();
+    }
+
+private:
+    zim::SuggestionItem m_item;
+};
+
 // Forward declaration
 class SuggestionSearchWrapper;
 
@@ -119,6 +145,7 @@ public:
         }
     }
     
+    // EXISTING: Backward compatible method returning EntryWrapper objects
     std::vector<EntryWrapper> getResults(int start, int count) const {
         try {
             zim::SuggestionResultSet resultSet = search_.getResults(start, count);
@@ -140,6 +167,31 @@ public:
         } catch (const std::exception& e) {
             std::cout << "getResults error: " << e.what() << std::endl;
             return std::vector<EntryWrapper>();
+        }
+    }
+
+    // NEW: Method returning SuggestionItemWrapper objects with snippet support
+    std::vector<SuggestionItemWrapper> getSuggestionItems(int start, int count) const {
+        try {
+            zim::SuggestionResultSet resultSet = search_.getResults(start, count);
+            std::vector<SuggestionItemWrapper> results;
+            
+            // Use the iterator to get suggestion items with snippets
+            for (auto it = resultSet.begin(); it != resultSet.end(); ++it) {
+                try {
+                    // Use the iterator's operator* to get SuggestionItem
+                    const zim::SuggestionItem& suggestionItem = *it;
+                    results.push_back(SuggestionItemWrapper(suggestionItem));
+                } catch (const std::exception& e) {
+                    std::cout << "Error getting suggestion item from iterator: " << e.what() << std::endl;
+                    // Skip this item and continue
+                }
+            }
+            
+            return results;
+        } catch (const std::exception& e) {
+            std::cout << "getSuggestionItems error: " << e.what() << std::endl;
+            return std::vector<SuggestionItemWrapper>();
         }
     }
 
@@ -221,7 +273,7 @@ std::vector<EntryWrapper> searchWithLanguage(std::string text, int numResults, s
     }
 }
 
-// Suggestion search function using proper API
+// EXISTING: Suggestion search function using proper API (backward compatible)
 std::vector<EntryWrapper> suggest(std::string text, int numResults) {
     try {
         auto suggestionSearcher = zim::SuggestionSearcher(*g_archive);
@@ -249,6 +301,34 @@ std::vector<EntryWrapper> suggest(std::string text, int numResults) {
     }
 }
 
+// NEW: Enhanced suggestion search function returning SuggestionItemWrapper objects with snippets
+std::vector<SuggestionItemWrapper> suggestWithSnippets(std::string text, int numResults) {
+    try {
+        auto suggestionSearcher = zim::SuggestionSearcher(*g_archive);
+        
+        // Use suggest() method
+        auto suggestionSearch = suggestionSearcher.suggest(text);
+        auto resultSet = suggestionSearch.getResults(0, numResults);
+        std::vector<SuggestionItemWrapper> ret;
+        
+        // Use the iterator to get suggestion items with snippets
+        for (auto it = resultSet.begin(); it != resultSet.end(); ++it) {
+            try {
+                // Use the iterator's operator* to get SuggestionItem
+                const zim::SuggestionItem& suggestionItem = *it;
+                ret.push_back(SuggestionItemWrapper(suggestionItem));
+            } catch (const std::exception& e) {
+                std::cout << "Error getting suggestion item from iterator: " << e.what() << std::endl;
+                // Skip this item and continue
+            }
+        }
+        return ret;
+    } catch(const std::exception& e) {
+        std::cout << "suggestion with snippets error: " << e.what() << std::endl;
+        return std::vector<SuggestionItemWrapper>();
+    }
+}
+
 // Binding code
 EMSCRIPTEN_BINDINGS(libzim_module) {
     emscripten::function("loadArchive", &loadArchive);
@@ -256,9 +336,11 @@ EMSCRIPTEN_BINDINGS(libzim_module) {
     emscripten::function("getArticleCount", &getArticleCount);
     emscripten::function("search", &search);
     emscripten::function("searchWithLanguage", &searchWithLanguage);
-    emscripten::function("suggest", &suggest);
+    emscripten::function("suggest", &suggest);  // Backward compatible
+    emscripten::function("suggestWithSnippets", &suggestWithSnippets);  // NEW: With snippets
     emscripten::register_vector<char>("vector<char>");
     emscripten::register_vector<EntryWrapper>("vector(EntryWrapper)");
+    emscripten::register_vector<SuggestionItemWrapper>("vector(SuggestionItemWrapper)");  // NEW
     class_<EntryWrapper>("EntryWrapper")
       .function("getItem", &EntryWrapper::getItem)
       .function("getPath", &EntryWrapper::getPath)
@@ -273,12 +355,20 @@ EMSCRIPTEN_BINDINGS(libzim_module) {
     class_<BlobWrapper>("BlobWrapper")
       .function("getContent", &BlobWrapper::getContent)
       ;
+    // NEW: SuggestionItemWrapper binding
+    class_<SuggestionItemWrapper>("SuggestionItemWrapper")
+      .function("getTitle", &SuggestionItemWrapper::getTitle)
+      .function("getPath", &SuggestionItemWrapper::getPath)
+      .function("getSnippet", &SuggestionItemWrapper::getSnippet)
+      .function("hasSnippet", &SuggestionItemWrapper::hasSnippet)
+      ;
     class_<SuggestionSearcherWrapper>("SuggestionSearcher")
       .constructor<>()
       .function("suggest", &SuggestionSearcherWrapper::suggest)
       ;
     class_<SuggestionSearchWrapper>("SuggestionSearch")
       .function("getEstimatedMatches", &SuggestionSearchWrapper::getEstimatedMatches)
-      .function("getResults", &SuggestionSearchWrapper::getResults)
+      .function("getResults", &SuggestionSearchWrapper::getResults)  // Backward compatible
+      .function("getSuggestionItems", &SuggestionSearchWrapper::getSuggestionItems)  // NEW: With snippets
       ;
 }
