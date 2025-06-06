@@ -137,7 +137,8 @@ public:
     
     EntryWrapper getEntry() const {
         try {
-            return EntryWrapper(zim::Entry(m_iterator));
+            // FIX: Dereference the iterator to get the Entry
+            return EntryWrapper(*m_iterator);
         } catch (const std::exception& e) {
             std::cout << "SearchIterator getEntry error: " << e.what() << std::endl;
             throw;
