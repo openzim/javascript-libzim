@@ -91,19 +91,27 @@ public:
         : m_item(item) {}
 
     std::string getTitle() const {
-        return m_item.getTitle();
+        std::string title = m_item.getTitle();
+        std::cout << "DEBUG SuggestionItem.getTitle(): '" << title << "'" << std::endl;
+        return title;
     }
     
     std::string getPath() const {
-        return m_item.getPath();
+        std::string path = m_item.getPath();
+        std::cout << "DEBUG SuggestionItem.getPath(): '" << path << "'" << std::endl;
+        return path;
     }
     
     std::string getSnippet() const {
-        return m_item.getSnippet();
+        std::string snippet = m_item.getSnippet();
+        std::cout << "DEBUG SuggestionItem.getSnippet(): '" << snippet << "' (length: " << snippet.length() << ")" << std::endl;
+        return snippet;
     }
     
     bool hasSnippet() const {
-        return m_item.hasSnippet();
+        bool has = m_item.hasSnippet();
+        std::cout << "DEBUG SuggestionItem.hasSnippet(): " << (has ? "true" : "false") << std::endl;
+        return has;
     }
 
 private:
@@ -173,21 +181,30 @@ public:
     // NEW: Method returning SuggestionItemWrapper objects with snippet support
     std::vector<SuggestionItemWrapper> getSuggestionItems(int start, int count) const {
         try {
+            std::cout << "DEBUG getSuggestionItems called: start=" << start << ", count=" << count << std::endl;
             zim::SuggestionResultSet resultSet = search_.getResults(start, count);
+            std::cout << "DEBUG resultSet size: " << resultSet.size() << std::endl;
             std::vector<SuggestionItemWrapper> results;
             
+            int index = 0;
             // Use the iterator to get suggestion items with snippets
             for (auto it = resultSet.begin(); it != resultSet.end(); ++it) {
                 try {
+                    std::cout << "DEBUG processing suggestion item " << index << std::endl;
                     // Use the iterator's operator* to get SuggestionItem
                     const zim::SuggestionItem& suggestionItem = *it;
+                    std::cout << "DEBUG raw SuggestionItem - title: '" << suggestionItem.getTitle() 
+                             << "', hasSnippet: " << (suggestionItem.hasSnippet() ? "true" : "false")
+                             << ", snippet: '" << suggestionItem.getSnippet() << "'" << std::endl;
                     results.push_back(SuggestionItemWrapper(suggestionItem));
+                    index++;
                 } catch (const std::exception& e) {
                     std::cout << "Error getting suggestion item from iterator: " << e.what() << std::endl;
                     // Skip this item and continue
                 }
             }
             
+            std::cout << "DEBUG getSuggestionItems returning " << results.size() << " results" << std::endl;
             return results;
         } catch (const std::exception& e) {
             std::cout << "getSuggestionItems error: " << e.what() << std::endl;
@@ -304,24 +321,34 @@ std::vector<EntryWrapper> suggest(std::string text, int numResults) {
 // NEW: Enhanced suggestion search function returning SuggestionItemWrapper objects with snippets
 std::vector<SuggestionItemWrapper> suggestWithSnippets(std::string text, int numResults) {
     try {
+        std::cout << "DEBUG suggestWithSnippets called: query='" << text << "', numResults=" << numResults << std::endl;
         auto suggestionSearcher = zim::SuggestionSearcher(*g_archive);
         
         // Use suggest() method
         auto suggestionSearch = suggestionSearcher.suggest(text);
         auto resultSet = suggestionSearch.getResults(0, numResults);
+        std::cout << "DEBUG resultSet size: " << resultSet.size() << std::endl;
         std::vector<SuggestionItemWrapper> ret;
         
+        int index = 0;
         // Use the iterator to get suggestion items with snippets
         for (auto it = resultSet.begin(); it != resultSet.end(); ++it) {
             try {
+                std::cout << "DEBUG processing suggestion item " << index << std::endl;
                 // Use the iterator's operator* to get SuggestionItem
                 const zim::SuggestionItem& suggestionItem = *it;
+                std::cout << "DEBUG raw SuggestionItem " << index << " - title: '" << suggestionItem.getTitle() 
+                         << "', hasSnippet: " << (suggestionItem.hasSnippet() ? "true" : "false")
+                         << ", snippet: '" << suggestionItem.getSnippet() << "'" << std::endl;
                 ret.push_back(SuggestionItemWrapper(suggestionItem));
+                index++;
             } catch (const std::exception& e) {
                 std::cout << "Error getting suggestion item from iterator: " << e.what() << std::endl;
                 // Skip this item and continue
             }
         }
+        
+        std::cout << "DEBUG suggestWithSnippets returning " << ret.size() << " results" << std::endl;
         return ret;
     } catch(const std::exception& e) {
         std::cout << "suggestion with snippets error: " << e.what() << std::endl;

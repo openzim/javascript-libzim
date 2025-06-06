@@ -70,23 +70,106 @@ self.addEventListener('message', function(e) {
     else if (action === 'suggestWithSnippets') {
         var text = e.data.text;
         var numResults = e.data.numResults || 10;
-        var suggestions = Module.suggestWithSnippets(text, numResults);
-        console.debug('Found nb suggestions with snippets = ' + suggestions.size(), suggestions);
-        var serializedSuggestions = [];
-        for (var i=0; i<suggestions.size(); i++) {
-            var item = suggestions.get(i);
-            var suggestionData = {
-                path: item.getPath(),
-                title: item.getTitle(),
-                hasSnippet: item.hasSnippet()
-            };
-            // Only include snippet if it exists to minimize message size
-            if (item.hasSnippet()) {
-                suggestionData.snippet = item.getSnippet();
+        
+        console.debug('=== DEBUG suggestWithSnippets START ===');
+        console.debug('Query:', text, 'NumResults:', numResults);
+        console.debug('Module.suggestWithSnippets exists:', typeof Module.suggestWithSnippets);
+        
+        try {
+            if (typeof Module.suggestWithSnippets === 'function') {
+                var suggestions = Module.suggestWithSnippets(text, numResults);
+                console.debug('Found nb suggestions with snippets = ' + suggestions.size());
+                
+                var serializedSuggestions = [];
+                for (var i=0; i<suggestions.size(); i++) {
+                    var item = suggestions.get(i);
+                    
+                    var title = item.getTitle();
+                    var path = item.getPath();
+                    var hasSnippet = item.hasSnippet();
+                    var snippet = hasSnippet ? item.getSnippet() : '';
+                    
+                    console.debug('=== ITEM ' + i + ' ===');
+                    console.debug('  Title: "' + title + '"');
+                    console.debug('  Path: "' + path + '"');
+                    console.debug('  hasSnippet:', hasSnippet);
+                    console.debug('  Snippet: "' + snippet + '"');
+                    console.debug('  Snippet length:', snippet.length);
+                    console.debug('  Title length:', title.length);
+                    
+                    // CORRECTED Analysis for HTML content
+                    if (hasSnippet && snippet) {
+                        // Check if snippet is just the highlighted title repeated
+                        var queryLower = text.toLowerCase();
+                        var snippetLower = snippet.toLowerCase();
+                        var titleLower = title.toLowerCase();
+                        
+                        if (snippet === title) {
+                            console.debug('  ⚠️ ISSUE: Snippet equals title exactly!');
+                        } else if (snippet.length < title.length * 2) {
+                            console.debug('  ⚠️ ISSUE: Snippet is too short - likely not real content');
+                        } else if (snippetLower.split(queryLower).length > 4) {
+                            console.debug('  ⚠️ ISSUE: Query term repeated too many times - likely highlighted title');
+                        } else if (snippet.length > 100) {
+                            console.debug('  ✓ Snippet appears to be real content (good length)');
+                        } else {
+                            console.debug('  ? Snippet is borderline - could be real or highlighted title');
+                        }
+                        
+                        // Count actual content words vs search term repetitions
+                        var totalWords = snippet.replace(/<[^>]*>/g, '').split(/\s+/).length;
+                        var queryWords = snippet.toLowerCase().split(queryLower).length - 1;
+                        console.debug('  Total words in snippet:', totalWords, 'Query repetitions:', queryWords);
+                        
+                        if (queryWords > totalWords / 2) {
+                            console.debug('  ⚠️ ISSUE: Too many query repetitions vs content words');
+                        }
+                    } else {
+                        console.debug('  ℹ️ No snippet available');
+                    }
+                    
+                    var suggestionData = {
+                        path: path,
+                        title: title,
+                        hasSnippet: hasSnippet
+                    };
+                    
+                    // Only include snippet if it exists to minimize message size
+                    if (hasSnippet && snippet) {
+                        suggestionData.snippet = snippet;
+                    }
+                    serializedSuggestions.push(suggestionData);
+                }
+                
+                console.debug('=== DEBUG suggestWithSnippets END ===');
+                console.debug('Sending ' + serializedSuggestions.length + ' suggestions to main thread');
+                outgoingMessagePort.postMessage({ suggestions: serializedSuggestions });
+            } else {
+                // Fallback to regular suggest if suggestWithSnippets doesn't exist
+                console.warn('suggestWithSnippets function not available, falling back to regular suggest');
+                var suggestions = Module.suggest(text, numResults);
+                var serializedSuggestions = [];
+                for (var i=0; i<suggestions.size(); i++) {
+                    var entry = suggestions.get(i);
+                    serializedSuggestions.push({
+                        path: entry.getPath(), 
+                        title: entry.getTitle(),
+                        hasSnippet: false
+                    });
+                }
+                outgoingMessagePort.postMessage({ 
+                    suggestions: serializedSuggestions,
+                    fallback: true,
+                    message: 'suggestWithSnippets not available, used fallback'
+                });
             }
-            serializedSuggestions.push(suggestionData);
+        } catch (error) {
+            console.error('suggestWithSnippets error:', error);
+            outgoingMessagePort.postMessage({ 
+                error: 'suggestWithSnippets failed: ' + error.toString(),
+                suggestions: [] 
+            });
         }
-        outgoingMessagePort.postMessage({ suggestions: serializedSuggestions });
     }
     // Class-based suggestion search with advanced options
     // Supports both basic entries and enhanced suggestion items with snippets
@@ -96,52 +179,85 @@ self.addEventListener('message', function(e) {
         var count = e.data.count || 10;
         var includeSnippets = e.data.includeSnippets || false;
         
+        console.debug('=== DEBUG suggestionSearch START ===');
+        console.debug('Query:', text, 'Start:', start, 'Count:', count, 'IncludeSnippets:', includeSnippets);
+        console.debug('Module.SuggestionSearcher exists:', typeof Module.SuggestionSearcher);
+        
         try {
-            // Create suggestion searcher and perform search
-            var searcher = new Module.SuggestionSearcher();
-            var search = searcher.suggest(text);
-            var estimatedMatches = search.getEstimatedMatches();
-            
-            var serializedResults = [];
-            
-            if (includeSnippets) {
-                // Use getSuggestionItems for rich snippet information
-                var items = search.getSuggestionItems(start, count);
-                console.debug('Found nb suggestion items with snippets = ' + items.size() + ' (estimated total: ' + estimatedMatches + ')');
+            if (typeof Module.SuggestionSearcher === 'function') {
+                // Create suggestion searcher and perform search
+                var searcher = new Module.SuggestionSearcher();
+                var search = searcher.suggest(text);
+                var estimatedMatches = search.getEstimatedMatches();
                 
-                for (var i=0; i<items.size(); i++) {
-                    var item = items.get(i);
-                    var itemData = {
-                        path: item.getPath(),
-                        title: item.getTitle(),
-                        hasSnippet: item.hasSnippet()
-                    };
-                    if (item.hasSnippet()) {
-                        itemData.snippet = item.getSnippet();
+                console.debug('SuggestionSearch created, estimated matches:', estimatedMatches);
+                
+                var serializedResults = [];
+                
+                if (includeSnippets) {
+                    console.debug('Attempting to use getSuggestionItems...');
+                    // Check if getSuggestionItems method exists
+                    if (typeof search.getSuggestionItems === 'function') {
+                        // Use getSuggestionItems for rich snippet information
+                        var items = search.getSuggestionItems(start, count);
+                        console.debug('Found nb suggestion items with snippets = ' + items.size() + ' (estimated total: ' + estimatedMatches + ')');
+                        
+                        for (var i=0; i<items.size(); i++) {
+                            var item = items.get(i);
+                            
+                            var title = item.getTitle();
+                            var path = item.getPath();
+                            var hasSnippet = item.hasSnippet();
+                            var snippet = hasSnippet ? item.getSnippet() : '';
+                            
+                            console.debug('=== CLASS-BASED ITEM ' + i + ' ===');
+                            console.debug('  Title: "' + title + '"');
+                            console.debug('  Path: "' + path + '"');
+                            console.debug('  hasSnippet:', hasSnippet);
+                            console.debug('  Snippet: "' + snippet + '"');
+                            
+                            var itemData = {
+                                path: path,
+                                title: title,
+                                hasSnippet: hasSnippet
+                            };
+                            if (hasSnippet && snippet) {
+                                itemData.snippet = snippet;
+                            }
+                            serializedResults.push(itemData);
+                        }
+                    } else {
+                        console.warn('getSuggestionItems method not available, falling back to getResults');
+                        includeSnippets = false; // Force fallback
                     }
-                    serializedResults.push(itemData);
                 }
-            } else {
-                // Use getResults for backward compatible entry information
-                var entries = search.getResults(start, count);
-                console.debug('Found nb suggestion entries = ' + entries.size() + ' (estimated total: ' + estimatedMatches + ')');
                 
-                for (var i=0; i<entries.size(); i++) {
-                    var entry = entries.get(i);
-                    serializedResults.push({
-                        path: entry.getPath(),
-                        title: entry.getTitle()
-                    });
+                if (!includeSnippets) {
+                    // Use getResults for backward compatible entry information
+                    var entries = search.getResults(start, count);
+                    console.debug('Found nb suggestion entries = ' + entries.size() + ' (estimated total: ' + estimatedMatches + ')');
+                    
+                    for (var i=0; i<entries.size(); i++) {
+                        var entry = entries.get(i);
+                        serializedResults.push({
+                            path: entry.getPath(),
+                            title: entry.getTitle(),
+                            hasSnippet: false
+                        });
+                    }
                 }
+                
+                console.debug('=== DEBUG suggestionSearch END ===');
+                outgoingMessagePort.postMessage({ 
+                    suggestions: serializedResults,
+                    estimatedMatches: estimatedMatches,
+                    start: start,
+                    count: serializedResults.length,
+                    includeSnippets: includeSnippets
+                });
+            } else {
+                throw new Error('SuggestionSearcher class not available');
             }
-            
-            outgoingMessagePort.postMessage({ 
-                suggestions: serializedResults,
-                estimatedMatches: estimatedMatches,
-                start: start,
-                count: serializedResults.length,
-                includeSnippets: includeSnippets
-            });
             
         } catch (error) {
             console.error('SuggestionSearch error:', error);
