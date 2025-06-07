@@ -84,7 +84,7 @@ private:
     zim::Entry m_entry;
 };
 
-// NEW: SearchIterator wrapper - fixed to match NodeJS implementation
+// NEW: SearchIterator wrapper with enhanced snippet handling
 class SearchIteratorWrapper {
 public:
     // FIX: Store the SearchIterator by value like NodeJS does
@@ -100,7 +100,18 @@ public:
     }
     
     std::string getSnippet() const {
-        return m_iterator.getSnippet();
+        // FIXED: Handle the HTML parser exceptions properly in WASM environment
+        try {
+            // First try the standard getSnippet() method
+            return m_iterator.getSnippet();
+        } catch (const std::exception& e) {
+            std::cout << "Standard getSnippet failed with exception: " << e.what() << std::endl;
+            return "";
+        } catch (...) {
+            // If that fails due to the "bool" exception issue, implement fallback snippet generation
+            std::cout << "Standard getSnippet failed with non-standard exception, trying fallback..." << std::endl;
+            return generateFallbackSnippet();
+        }
     }
     
     int getScore() const {
@@ -117,6 +128,73 @@ public:
 
 private:
     zim::SearchIterator m_iterator;
+    
+    // Fallback snippet generation that handles the HTML parser exceptions
+    std::string generateFallbackSnippet() const {
+        try {
+            // Try to access the entry and generate snippet manually
+            zim::Entry entry = *m_iterator;
+            
+            // Get the content
+            std::string content = entry.getItem().getData();
+            
+            // Simple text extraction - remove HTML tags and extract first 500 chars
+            std::string textContent = extractTextFromHtml(content);
+            
+            // Truncate to reasonable snippet length
+            if (textContent.length() > 500) {
+                textContent = textContent.substr(0, 500) + "...";
+            }
+            
+            return textContent;
+        } catch (...) {
+            return "";
+        }
+    }
+    
+    // Simple HTML tag removal for fallback snippets
+    std::string extractTextFromHtml(const std::string& html) const {
+        std::string result;
+        bool inTag = false;
+        bool inScript = false;
+        bool inStyle = false;
+        
+        for (size_t i = 0; i < html.length(); ++i) {
+            char c = html[i];
+            
+            if (c == '<') {
+                inTag = true;
+                // Check for script/style tags
+                if (i + 7 < html.length() && html.substr(i, 7) == "<script") {
+                    inScript = true;
+                } else if (i + 6 < html.length() && html.substr(i, 6) == "<style") {
+                    inStyle = true;
+                } else if (i + 8 < html.length() && html.substr(i, 8) == "</script") {
+                    inScript = false;
+                } else if (i + 7 < html.length() && html.substr(i, 7) == "</style") {
+                    inStyle = false;
+                }
+            } else if (c == '>') {
+                inTag = false;
+            } else if (!inTag && !inScript && !inStyle) {
+                if (c == '\n' || c == '\r' || c == '\t') {
+                    c = ' ';
+                }
+                // Avoid multiple spaces
+                if (c == ' ' && !result.empty() && result.back() == ' ') {
+                    continue;
+                }
+                result += c;
+            }
+        }
+        
+        // Trim leading/trailing whitespace
+        size_t start = result.find_first_not_of(" \t\n\r");
+        if (start == std::string::npos) return "";
+        
+        size_t end = result.find_last_not_of(" \t\n\r");
+        return result.substr(start, end - start + 1);
+    }
 };
 
 // Forward declaration
