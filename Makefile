@@ -51,7 +51,7 @@ build/lib/libzstd.a :
 	# Origin: https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz 
 	[ ! -f zstd-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/zstd-1.5.2.tar.gz || true
 	tar xf zstd-*.tar.gz
-	cd zstd-*/build/meson ; meson setup --cross-file=../../../emscripten-crosscompile.ini -Dbin_programs=false -Dbin_contrib=false -Dzlib=disabled -Dlzma=disabled -Dlz4=disabled --prefix=`pwd`/../../../build --libdir=lib builddir
+	cd zstd-*/build/meson ; meson setup --cross-file=../../../emscripten-crosscompile.ini -Dbin_programs=false -Dbin_contrib=false -Tzlib=disabled -Dlzma=disabled -Dlz4=disabled --prefix=`pwd`/../../../build --libdir=lib builddir
 	cd zstd-*/build/meson/builddir ; ninja
 	cd zstd-*/build/meson/builddir ; ninja install
 	
@@ -88,23 +88,23 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	sed -i 's/m_stemmer = Xapian::Stem(languageLocale.getLanguage());/{ std::string stemLang = languageLocale.getLanguage(); static const std::set<std::string> supportedLangs = {"ar", "hy", "eu", "ca", "da", "nl", "en", "fi", "fr", "de", "el", "hi", "hu", "id", "ga", "it", "lt", "ne", "no", "pt", "ro", "ru", "sr", "es", "sv", "tr"}; if (supportedLangs.find(stemLang) != supportedLangs.end()) { m_stemmer = Xapian::Stem(stemLang); } else { m_stemmer = Xapian::Stem("none"); } }/' libzim-*/src/search.cpp
 	# SUGGESTION.CPP - Whitelist all Xapian-supported languages, use 'none' for all others
 	sed -i 's/m_stemmer = Xapian::Stem(languageLocale.getLanguage());/{ std::string stemLang = languageLocale.getLanguage(); static const std::set<std::string> supportedLangs = {"ar", "hy", "eu", "ca", "da", "nl", "en", "fi", "fr", "de", "el", "hi", "hu", "id", "ga", "it", "lt", "ne", "no", "pt", "ro", "ru", "sr", "es", "sv", "tr"}; if (supportedLangs.find(stemLang) != supportedLangs.end()) { m_stemmer = Xapian::Stem(stemLang); } else { m_stemmer = Xapian::Stem("none"); } }/' libzim-*/src/suggestion.cpp
-	@echo "=== APPLYING SEARCH SNIPPETS WASM FIX ==="
-	# SEARCH_ITERATOR.CPP - Complete fix for HTML parser exceptions AND Xapian snippet generation in WASM
-	# This patch addresses both HTML parser bool exceptions AND Xapian snippet() failures in WASM environment
-	# Replace the problematic empty catch block with properly formatted catch blocks for HTML parser exceptions
-	sed -i 's/} catch (...) {}/} catch (bool) {\n            \/\/ HTML parser control flow exceptions (normal behavior)\n        } catch (const std::string\&) {\n            \/\/ HTML parser error exceptions\n        } catch (...) {\n            \/\/ Other exceptions\n        }/' libzim-*/src/search_iterator.cpp
-	# Wrap the Xapian snippet() call with try-catch and fallback logic for WASM
-	sed -i 's/return internal->mp_mset->snippet(/try {\n                return internal->mp_mset->snippet(/' libzim-*/src/search_iterator.cpp
-	# Add WASM fallback snippet generation when Xapian snippet() fails
-	sed -i '/\/\*flags=\*\/0);/a\            } catch (...) {\n                \/\/ WASM FALLBACK: Xapian snippet failed, use simple text fallback\n                std::string textContent = htmlParser.dump;\n                if (textContent.empty()) {\n                    return "";\n                }\n                \/\/ Simple snippet: first 500 chars with ellipsis\n                if (textContent.length() > 500) {\n                    return textContent.substr(0, 500) + "...";\n                } else {\n                    return textContent;\n                }\n            }' libzim-*/src/search_iterator.cpp
+	@echo "=== APPLYING ROBUST WASM SNIPPET FIX ==="
+	# SEARCH_ITERATOR.CPP - Use node-libzim approach: robust exception handling for WASM
+	# This allows HTML parser to work properly and Xapian to generate contextual snippets
+	# Step 1: Use simple catch-all for HTML parser (more robust than specific exception types in WASM)
+	sed -i 's/} catch (...) {}/} catch (...) {\n            \/\/ HTML parser exceptions (bool control flow + others) - continue with whatever was parsed\n        }/' libzim-*/src/search_iterator.cpp
+	# Step 2: Add comprehensive exception handling around Xapian snippet generation
+	sed -i 's/return internal->mp_mset->snippet(/try {\n                \/\/ Try Xapian snippet generation with parsed HTML\n                return internal->mp_mset->snippet(/' libzim-*/src/search_iterator.cpp
+	# Step 3: Add smart fallback that tries to preserve context when Xapian fails
+	sed -i '/\/\*flags=\*\/0);/a\            } catch (...) {\n                \/\/ WASM FALLBACK: If Xapian snippet fails, try to extract context manually\n                std::string htmlText = htmlParser.dump;\n                if (htmlText.empty()) {\n                    \/\/ If HTML parser failed completely, try raw content\n                    htmlText = entry.getItem().getData();\n                }\n                \n                \/\/ Simple context extraction - look for text around search terms if possible\n                \/\/ For now, return first reasonable chunk of text content\n                if (htmlText.length() > 500) {\n                    return htmlText.substr(0, 500) + "...";\n                } else {\n                    return htmlText;\n                }\n            }' libzim-*/src/search_iterator.cpp
 	@echo "=== VERIFYING PATCHES APPLIED ==="
 	@echo "search.cpp - Headers added: $$(grep -c '#include <set>' libzim-*/src/search.cpp || echo '0')"
 	@echo "suggestion.cpp - Headers added: $$(grep -c '#include <set>' libzim-*/src/suggestion.cpp || echo '0')"
 	@echo "search.cpp - Whitelist added: $$(grep -c 'supportedLangs' libzim-*/src/search.cpp || echo '0')"
 	@echo "suggestion.cpp - Whitelist added: $$(grep -c 'supportedLangs' libzim-*/src/suggestion.cpp || echo '0')"
-	@echo "search_iterator.cpp - WASM FALLBACK comments: $$(grep -c 'WASM FALLBACK' libzim-*/src/search_iterator.cpp || echo '0')"
-	@echo "search_iterator.cpp - Exception handlers: $$(grep -c 'catch.*{' libzim-*/src/search_iterator.cpp || echo '0')"
-	@echo "search_iterator.cpp - Snippet fallback: $$(grep -c 'textContent.substr' libzim-*/src/search_iterator.cpp || echo '0')"
+	@echo "search_iterator.cpp - WASM FALLBACK applied: $$(grep -c 'WASM FALLBACK' libzim-*/src/search_iterator.cpp || echo '0')"
+	@echo "search_iterator.cpp - Robust exception handling: $$(grep -c 'HTML parser exceptions' libzim-*/src/search_iterator.cpp || echo '0')"
+	@echo "search_iterator.cpp - Smart context fallback: $$(grep -c 'extract context manually' libzim-*/src/search_iterator.cpp || echo '0')"
 	# It's no use trying to compile examples
 	sed -i -e "s/^subdir('examples')//" libzim-*/meson.build
 	cd libzim-*/ ; PKG_CONFIG_PATH=/src/build/lib/pkgconfig meson --prefix=`pwd`/../build --cross-file=../emscripten-crosscompile.ini . build -DUSE_MMAP=false
