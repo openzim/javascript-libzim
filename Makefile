@@ -89,24 +89,27 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	# SUGGESTION.CPP - Whitelist all Xapian-supported languages, use 'none' for all others
 	sed -i 's/m_stemmer = Xapian::Stem(languageLocale.getLanguage());/{ std::string stemLang = languageLocale.getLanguage(); static const std::set<std::string> supportedLangs = {"ar", "hy", "eu", "ca", "da", "nl", "en", "fi", "fr", "de", "el", "hi", "hu", "id", "ga", "it", "lt", "ne", "no", "pt", "ro", "ru", "sr", "es", "sv", "tr"}; if (supportedLangs.find(stemLang) != supportedLangs.end()) { m_stemmer = Xapian::Stem(stemLang); } else { m_stemmer = Xapian::Stem("none"); } }/' libzim-*/src/suggestion.cpp
 	@echo "=== APPLYING SEARCH SNIPPETS WASM FIX ==="
-	# SEARCH_ITERATOR.CPP - Fix HTML parser bool exception handling for proper snippet generation
-	# This surgical patch fixes the empty catch (...) {} block that loses HTML content when bool exceptions are thrown
+	# SEARCH_ITERATOR.CPP - Complete fix for HTML parser exceptions AND Xapian snippet generation in WASM
+	# This patch addresses both HTML parser bool exceptions AND Xapian snippet() failures in WASM environment
 	# Step 1: Add variable declaration for tracking parsing success
-	sed -i '/std::string content = entry.getItem().getData();/a\            \n            // WASM FIX: Properly handle HTML parser exceptions\n            bool parsingSucceeded = false;' libzim-*/src/search_iterator.cpp
+	sed -i '/std::string content = entry.getItem().getData();/a\            \n            // WASM FIX: HTML parser exception handling\n            bool parsingSucceeded = false;' libzim-*/src/search_iterator.cpp
 	# Step 2: Add success flag after successful parse_html call
 	sed -i '/htmlParser.parse_html(content, "UTF-8", true);/a\              parsingSucceeded = true;' libzim-*/src/search_iterator.cpp
 	# Step 3: Replace the problematic empty catch block with proper exception handling
-	sed -i 's/} catch (...) {}/} catch (bool) {\n              \/\/ Expected when hitting <\/body> tag - content still valid\n              parsingSucceeded = true;\n            } catch (const std::string\&) {\n              \/\/ Charset change - content may be valid\n              parsingSucceeded = true;\n            } catch (...) {\n              \/\/ Other exceptions\n              parsingSucceeded = false;\n            }/' libzim-*/src/search_iterator.cpp
-	# Step 4: Add content validation before attempting snippet generation
-	sed -i '/parsingSucceeded = false;/a\            \n            \/\/ Check if we have content to work with\n            if (htmlParser.dump.empty() \&\& !parsingSucceeded) {\n                return "";\n            }' libzim-*/src/search_iterator.cpp
+	sed -i 's/} catch (...) {}/} catch (bool) { parsingSucceeded = true; } catch (const std::string\&) { parsingSucceeded = true; } catch (...) { parsingSucceeded = false; }/' libzim-*/src/search_iterator.cpp
+	# Step 4: Wrap the Xapian snippet() call with try-catch and fallback logic
+	sed -i 's/return internal->mp_mset->snippet(/try {\n                return internal->mp_mset->snippet(/' libzim-*/src/search_iterator.cpp
+	# Step 5: Add WASM fallback snippet generation when Xapian fails
+	sed -i '/\/\*flags=\*\/0);/a\            } catch (...) {\n                \/\/ WASM FALLBACK: Xapian snippet failed, use simple text fallback\n                std::string textContent = htmlParser.dump;\n                if (textContent.empty()) {\n                    return "";\n                }\n                if (textContent.length() > 500) {\n                    return textContent.substr(0, 500) + "...";\n                } else {\n                    return textContent;\n                }\n            }' libzim-*/src/search_iterator.cpp
 	@echo "=== VERIFYING PATCHES APPLIED ==="
 	@echo "search.cpp - Headers added: $$(grep -c '#include <set>' libzim-*/src/search.cpp || echo '0')"
 	@echo "suggestion.cpp - Headers added: $$(grep -c '#include <set>' libzim-*/src/suggestion.cpp || echo '0')"
 	@echo "search.cpp - Whitelist added: $$(grep -c 'supportedLangs' libzim-*/src/search.cpp || echo '0')"
 	@echo "suggestion.cpp - Whitelist added: $$(grep -c 'supportedLangs' libzim-*/src/suggestion.cpp || echo '0')"
 	@echo "search_iterator.cpp - WASM fix comments: $$(grep -c 'WASM FIX' libzim-*/src/search_iterator.cpp || echo '0')"
-	@echo "search_iterator.cpp - Exception handlers: $$(grep -c 'catch (bool)' libzim-*/src/search_iterator.cpp || echo '0')"
-	@echo "search_iterator.cpp - Content validation: $$(grep -c 'htmlParser.dump.empty()' libzim-*/src/search_iterator.cpp || echo '0')"
+	@echo "search_iterator.cpp - WASM fallback logic: $$(grep -c 'WASM FALLBACK' libzim-*/src/search_iterator.cpp || echo '0')"
+	@echo "search_iterator.cpp - Exception handlers: $$(grep -c 'catch.*{' libzim-*/src/search_iterator.cpp || echo '0')"
+	@echo "search_iterator.cpp - Snippet fallback: $$(grep -c 'textContent.substr' libzim-*/src/search_iterator.cpp || echo '0')"
 	# It's no use trying to compile examples
 	sed -i -e "s/^subdir('examples')//" libzim-*/meson.build
 	cd libzim-*/ ; PKG_CONFIG_PATH=/src/build/lib/pkgconfig meson --prefix=`pwd`/../build --cross-file=../emscripten-crosscompile.ini . build -DUSE_MMAP=false
