@@ -51,7 +51,7 @@ build/lib/libzstd.a :
 	# Origin: https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz 
 	[ ! -f zstd-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/zstd-1.5.2.tar.gz || true
 	tar xf zstd-*.tar.gz
-	cd zstd-*/build/meson ; meson setup --cross-file=../../../emscripten-crosscompile.ini -Dbin_programs=false -Dbin_contrib=false -Tzlib=disabled -Dlzma=disabled -Dlz4=disabled --prefix=`pwd`/../../../build --libdir=lib builddir
+	cd zstd-*/build/meson ; meson setup --cross-file=../../../emscripten-crosscompile.ini -Dbin_programs=false -Dbin_contrib=false -Dzlib=disabled -Dlzma=disabled -Dlz4=disabled --prefix=`pwd`/../../../build --libdir=lib builddir
 	cd zstd-*/build/meson/builddir ; ninja
 	cd zstd-*/build/meson/builddir ; ninja install
 	
