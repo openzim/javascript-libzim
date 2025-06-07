@@ -91,23 +91,18 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	@echo "=== APPLYING SEARCH SNIPPETS WASM FIX ==="
 	# SEARCH_ITERATOR.CPP - Complete fix for HTML parser exceptions AND Xapian snippet generation in WASM
 	# This patch addresses both HTML parser bool exceptions AND Xapian snippet() failures in WASM environment
-	# Step 1: Add variable declaration for tracking parsing success
-	sed -i '/std::string content = entry.getItem().getData();/a\            \n            // WASM FIX: HTML parser exception handling\n            bool parsingSucceeded = false;' libzim-*/src/search_iterator.cpp
-	# Step 2: Add success flag after successful parse_html call
-	sed -i '/htmlParser.parse_html(content, "UTF-8", true);/a\              parsingSucceeded = true;' libzim-*/src/search_iterator.cpp
-	# Step 3: Replace the problematic empty catch block with proper exception handling
-	sed -i 's/} catch (...) {}/} catch (bool) { parsingSucceeded = true; } catch (const std::string\&) { parsingSucceeded = true; } catch (...) { parsingSucceeded = false; }/' libzim-*/src/search_iterator.cpp
-	# Step 4: Wrap the Xapian snippet() call with try-catch and fallback logic
+	# Replace the problematic empty catch block with proper exception handling for HTML parser bool exceptions
+	sed -i 's/} catch (...) {}/} catch (bool) { \/\/ HTML parser control flow exceptions (normal behavior) } catch (const std::string\&) { \/\/ HTML parser error exceptions } catch (...) { \/\/ Other exceptions }/' libzim-*/src/search_iterator.cpp
+	# Wrap the Xapian snippet() call with try-catch and fallback logic for WASM
 	sed -i 's/return internal->mp_mset->snippet(/try {\n                return internal->mp_mset->snippet(/' libzim-*/src/search_iterator.cpp
-	# Step 5: Add WASM fallback snippet generation when Xapian fails
-	sed -i '/\/\*flags=\*\/0);/a\            } catch (...) {\n                \/\/ WASM FALLBACK: Xapian snippet failed, use simple text fallback\n                std::string textContent = htmlParser.dump;\n                if (textContent.empty()) {\n                    return "";\n                }\n                if (textContent.length() > 500) {\n                    return textContent.substr(0, 500) + "...";\n                } else {\n                    return textContent;\n                }\n            }' libzim-*/src/search_iterator.cpp
+	# Add WASM fallback snippet generation when Xapian snippet() fails
+	sed -i '/\/\*flags=\*\/0);/a\            } catch (...) {\n                \/\/ WASM FALLBACK: Xapian snippet failed, use simple text fallback\n                std::string textContent = htmlParser.dump;\n                if (textContent.empty()) {\n                    return "";\n                }\n                \/\/ Simple snippet: first 500 chars with ellipsis\n                if (textContent.length() > 500) {\n                    return textContent.substr(0, 500) + "...";\n                } else {\n                    return textContent;\n                }\n            }' libzim-*/src/search_iterator.cpp
 	@echo "=== VERIFYING PATCHES APPLIED ==="
 	@echo "search.cpp - Headers added: $$(grep -c '#include <set>' libzim-*/src/search.cpp || echo '0')"
 	@echo "suggestion.cpp - Headers added: $$(grep -c '#include <set>' libzim-*/src/suggestion.cpp || echo '0')"
 	@echo "search.cpp - Whitelist added: $$(grep -c 'supportedLangs' libzim-*/src/search.cpp || echo '0')"
 	@echo "suggestion.cpp - Whitelist added: $$(grep -c 'supportedLangs' libzim-*/src/suggestion.cpp || echo '0')"
-	@echo "search_iterator.cpp - WASM fix comments: $$(grep -c 'WASM FIX' libzim-*/src/search_iterator.cpp || echo '0')"
-	@echo "search_iterator.cpp - WASM fallback logic: $$(grep -c 'WASM FALLBACK' libzim-*/src/search_iterator.cpp || echo '0')"
+	@echo "search_iterator.cpp - WASM fix comments: $$(grep -c 'WASM FALLBACK' libzim-*/src/search_iterator.cpp || echo '0')"
 	@echo "search_iterator.cpp - Exception handlers: $$(grep -c 'catch.*{' libzim-*/src/search_iterator.cpp || echo '0')"
 	@echo "search_iterator.cpp - Snippet fallback: $$(grep -c 'textContent.substr' libzim-*/src/search_iterator.cpp || echo '0')"
 	# It's no use trying to compile examples
