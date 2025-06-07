@@ -84,65 +84,35 @@ private:
     zim::Entry m_entry;
 };
 
-// NEW: SearchIterator wrapper with snippet support
+// NEW: SearchIterator wrapper - fixed to match NodeJS implementation
 class SearchIteratorWrapper {
 public:
-    SearchIteratorWrapper(zim::SearchIterator iterator)
+    // FIX: Store the SearchIterator by value like NodeJS does
+    SearchIteratorWrapper(const zim::SearchIterator& iterator)
         : m_iterator(iterator) {}
     
     std::string getPath() const {
-        try {
-            return m_iterator.getPath();
-        } catch (const std::exception& e) {
-            std::cout << "SearchIterator getPath error: " << e.what() << std::endl;
-            return "";
-        }
+        return m_iterator.getPath();
     }
     
     std::string getTitle() const {
-        try {
-            return m_iterator.getTitle();
-        } catch (const std::exception& e) {
-            std::cout << "SearchIterator getTitle error: " << e.what() << std::endl;
-            return "";
-        }
+        return m_iterator.getTitle();
     }
     
     std::string getSnippet() const {
-        try {
-            return m_iterator.getSnippet();
-        } catch (const std::exception& e) {
-            std::cout << "SearchIterator getSnippet error: " << e.what() << std::endl;
-            return "";
-        }
+        return m_iterator.getSnippet();
     }
     
     int getScore() const {
-        try {
-            return m_iterator.getScore();
-        } catch (const std::exception& e) {
-            std::cout << "SearchIterator getScore error: " << e.what() << std::endl;
-            return 0;
-        }
+        return m_iterator.getScore();
     }
     
     int getWordCount() const {
-        try {
-            return m_iterator.getWordCount();
-        } catch (const std::exception& e) {
-            std::cout << "SearchIterator getWordCount error: " << e.what() << std::endl;
-            return 0;
-        }
+        return m_iterator.getWordCount();
     }
     
     EntryWrapper getEntry() const {
-        try {
-            // FIX: Dereference the iterator to get the Entry
-            return EntryWrapper(*m_iterator);
-        } catch (const std::exception& e) {
-            std::cout << "SearchIterator getEntry error: " << e.what() << std::endl;
-            throw;
-        }
+        return EntryWrapper(*m_iterator);
     }
 
 private:
@@ -261,7 +231,7 @@ std::vector<EntryWrapper> search(std::string text, int numResults) {
     }
 }
 
-// NEW: Enhanced search with snippets
+// NEW: Enhanced search with snippets - fixed to match NodeJS pattern
 std::vector<SearchIteratorWrapper> searchWithSnippets(std::string text, int numResults) {
     try {
         auto searcher = zim::Searcher(*g_archive);
@@ -274,11 +244,17 @@ std::vector<SearchIteratorWrapper> searchWithSnippets(std::string text, int numR
         auto search = searcher.search(query);
         auto searchResultSet = search.getResults(0, numResults);
         
-        // Extract results with snippet support
+        // FIX: Use iterator pattern like NodeJS, not range-based for loop
         std::vector<SearchIteratorWrapper> ret;
-        for(auto it = searchResultSet.begin(); it != searchResultSet.end(); ++it) {
+        auto it = searchResultSet.begin();
+        auto end = searchResultSet.end();
+        
+        while (it != end) {
+            // Pass the iterator object directly, like NodeJS does
             ret.push_back(SearchIteratorWrapper(it));
+            ++it;
         }
+        
         return ret;
     } catch(const std::exception& e) {
         std::cout << "Search with snippets error: " << e.what() << std::endl;
