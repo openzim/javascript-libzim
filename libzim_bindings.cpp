@@ -96,6 +96,9 @@ public:
         } catch (const std::exception& e) {
             std::cout << "SearchIterator getPath error: " << e.what() << std::endl;
             return "";
+        } catch (...) {
+            std::cout << "SearchIterator getPath unknown error" << std::endl;
+            return "";
         }
     }
     
@@ -105,6 +108,9 @@ public:
         } catch (const std::exception& e) {
             std::cout << "SearchIterator getTitle error: " << e.what() << std::endl;
             return "";
+        } catch (...) {
+            std::cout << "SearchIterator getTitle unknown error" << std::endl;
+            return "";
         }
     }
     
@@ -112,8 +118,14 @@ public:
         try {
             return m_iterator.getSnippet();
         } catch (const std::exception& e) {
-            std::cout << "SearchIterator getSnippet error: " << e.what() << std::endl;
-            return "";
+            std::cout << "SearchIterator getSnippet std::exception: " << e.what() << std::endl;
+            return "[Snippet extraction failed: " + std::string(e.what()) + "]";
+        } catch (const char* e) {
+            std::cout << "SearchIterator getSnippet char* exception: " << e << std::endl;
+            return "[Snippet extraction failed: " + std::string(e) + "]";
+        } catch (...) {
+            std::cout << "SearchIterator getSnippet unknown exception type" << std::endl;
+            return "[Snippet extraction failed: HTML parsing error]";
         }
     }
     
@@ -122,6 +134,9 @@ public:
             return m_iterator.getScore();
         } catch (const std::exception& e) {
             std::cout << "SearchIterator getScore error: " << e.what() << std::endl;
+            return 0;
+        } catch (...) {
+            std::cout << "SearchIterator getScore unknown error" << std::endl;
             return 0;
         }
     }
@@ -132,6 +147,9 @@ public:
         } catch (const std::exception& e) {
             std::cout << "SearchIterator getWordCount error: " << e.what() << std::endl;
             return 0;
+        } catch (...) {
+            std::cout << "SearchIterator getWordCount unknown error" << std::endl;
+            return 0;
         }
     }
     
@@ -141,6 +159,9 @@ public:
             return EntryWrapper(*m_iterator);
         } catch (const std::exception& e) {
             std::cout << "SearchIterator getEntry error: " << e.what() << std::endl;
+            throw;
+        } catch (...) {
+            std::cout << "SearchIterator getEntry unknown error" << std::endl;
             throw;
         }
     }
