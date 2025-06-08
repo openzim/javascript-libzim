@@ -262,8 +262,8 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	}' libzim-9.3.0/src/suggestion_iterator.cpp
 
 	@echo "Suggestion iterator patched with detailed exception handling"
-    @echo ""
-
+	@echo ""
+	
 	@echo "=== VERIFYING LIBZIM BUILD ==="	
 	@echo "search.cpp - Headers added: $$(grep -c '#include <set>' libzim-*/src/search.cpp || echo '0')"
 	@echo "suggestion.cpp - Headers added: $$(grep -c '#include <set>' libzim-*/src/suggestion.cpp || echo '0')"
