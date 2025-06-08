@@ -232,7 +232,7 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	
 	@echo "=== APPLYING SUGGESTION ITERATOR DIAGNOSTIC PATCHES ==="
 	# Add iostream header for debug output to suggestion_iterator.cpp
-	sed -i '/#include "suggestion_iterator.h"/a #include <iostream>' libzim-9.3.0/src/suggestion_iterator.cpp
+	sed -i '/#include <stdexcept>/a #include <iostream>' libzim-9.3.0/src/suggestion_iterator.cpp
 	
 	# Replace the simple getIndexSnippet method with a diagnostic version
 	sed -i '/^std::string SuggestionIterator::getIndexSnippet() const {$$/,/^}$$/c\
