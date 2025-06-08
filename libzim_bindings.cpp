@@ -111,9 +111,6 @@ public:
             std::cout << "[WRAPPER DEBUG] getSnippet std::exception: " << e.what() << std::endl;
             std::cout << "[WRAPPER DEBUG] Exception type: " << typeid(e).name() << std::endl;
             return "";
-        } catch (const bool& b) {
-            std::cout << "[WRAPPER DEBUG] getSnippet bool exception: " << b << std::endl;
-            return "";
         } catch (const std::string& s) {
             std::cout << "[WRAPPER DEBUG] getSnippet string exception: " << s << std::endl;
             return "";
