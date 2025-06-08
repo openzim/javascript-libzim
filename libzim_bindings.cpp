@@ -84,6 +84,49 @@ private:
     zim::Entry m_entry;
 };
 
+// SearchIterator wrapper - Clean version relying on the fixed libzim implementation
+class SearchIteratorWrapper {
+public:
+    SearchIteratorWrapper(const zim::SearchIterator& iterator)
+        : m_iterator(iterator) {}
+    
+    std::string getPath() const {
+        return m_iterator.getPath();
+    }
+    
+    std::string getTitle() const {
+        return m_iterator.getTitle();
+    }
+    
+    std::string getSnippet() const {
+        try {
+            return m_iterator.getSnippet();
+        } catch (const std::exception& e) {
+            // Log only actual errors, not normal operation
+            std::cout << "SearchIterator::getSnippet() error: " << e.what() << std::endl;
+            return "";
+        } catch (...) {
+            std::cout << "SearchIterator::getSnippet() unknown error" << std::endl;
+            return "";
+        }
+    }
+    
+    int getScore() const {
+        return m_iterator.getScore();
+    }
+    
+    int getWordCount() const {
+        return m_iterator.getWordCount();
+    }
+    
+    EntryWrapper getEntry() const {
+        return EntryWrapper(*m_iterator);
+    }
+
+private:
+    zim::SearchIterator m_iterator;
+};
+
 // Forward declaration
 class SuggestionSearchWrapper;
 
@@ -179,9 +222,9 @@ std::vector<EntryWrapper> search(std::string text, int numResults) {
     try {
         auto searcher = zim::Searcher(*g_archive);
         
-        // FIX: Use proper Query construction
-        zim::Query query;          // Create empty query first
-        query.setQuery(text);      // Then set the query text
+        // Use proper Query construction
+        zim::Query query;
+        query.setQuery(text);
         
         auto search = searcher.search(query);
         auto searchResultSet = search.getResults(0, numResults);
@@ -193,6 +236,37 @@ std::vector<EntryWrapper> search(std::string text, int numResults) {
     } catch(const std::exception& e) {
         std::cout << "Search error: " << e.what() << std::endl;
         return std::vector<EntryWrapper>();
+    }
+}
+
+// Enhanced search with snippets - now works properly with the libzim fix
+std::vector<SearchIteratorWrapper> searchWithSnippets(std::string text, int numResults) {
+    try {
+        auto searcher = zim::Searcher(*g_archive);
+        
+        // Create query
+        zim::Query query;
+        query.setQuery(text);
+        
+        // Perform search
+        auto search = searcher.search(query);
+        auto searchResultSet = search.getResults(0, numResults);
+        
+        // Use iterator pattern like NodeJS, not range-based for loop
+        std::vector<SearchIteratorWrapper> ret;
+        auto it = searchResultSet.begin();
+        auto end = searchResultSet.end();
+        
+        while (it != end) {
+            // Pass the iterator object directly, like NodeJS does
+            ret.push_back(SearchIteratorWrapper(it));
+            ++it;
+        }
+        
+        return ret;
+    } catch(const std::exception& e) {
+        std::cout << "Search with snippets error: " << e.what() << std::endl;
+        return std::vector<SearchIteratorWrapper>();
     }
 }
 
@@ -255,10 +329,12 @@ EMSCRIPTEN_BINDINGS(libzim_module) {
     emscripten::function("getEntryByPath", &getEntryByPath);
     emscripten::function("getArticleCount", &getArticleCount);
     emscripten::function("search", &search);
+    emscripten::function("searchWithSnippets", &searchWithSnippets);
     emscripten::function("searchWithLanguage", &searchWithLanguage);
     emscripten::function("suggest", &suggest);
     emscripten::register_vector<char>("vector<char>");
     emscripten::register_vector<EntryWrapper>("vector(EntryWrapper)");
+    emscripten::register_vector<SearchIteratorWrapper>("vector(SearchIteratorWrapper)");
     class_<EntryWrapper>("EntryWrapper")
       .function("getItem", &EntryWrapper::getItem)
       .function("getPath", &EntryWrapper::getPath)
@@ -272,6 +348,14 @@ EMSCRIPTEN_BINDINGS(libzim_module) {
       ;
     class_<BlobWrapper>("BlobWrapper")
       .function("getContent", &BlobWrapper::getContent)
+      ;
+    class_<SearchIteratorWrapper>("SearchIteratorWrapper")
+      .function("getPath", &SearchIteratorWrapper::getPath)
+      .function("getTitle", &SearchIteratorWrapper::getTitle)
+      .function("getSnippet", &SearchIteratorWrapper::getSnippet)
+      .function("getScore", &SearchIteratorWrapper::getScore)
+      .function("getWordCount", &SearchIteratorWrapper::getWordCount)
+      .function("getEntry", &SearchIteratorWrapper::getEntry)
       ;
     class_<SuggestionSearcherWrapper>("SuggestionSearcher")
       .constructor<>()
