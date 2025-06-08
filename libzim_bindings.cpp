@@ -102,20 +102,19 @@ public:
         std::cout << "[WRAPPER DEBUG] SearchIteratorWrapper::getSnippet() called" << std::endl;
         try {
             std::string snippet = m_iterator.getSnippet();
-            std::cout << "[WRAPPER DEBUG] Got snippet from iterator: " << snippet.length() << " chars" << std::endl;
+            std::cout << "[WRAPPER DEBUG] ✅ SUCCESS: Got snippet from iterator: " << snippet.length() << " chars" << std::endl;
             if (snippet.length() > 0) {
-                std::cout << "[WRAPPER DEBUG] First 50 chars: " << snippet.substr(0, 50) << "..." << std::endl;
+                std::cout << "[WRAPPER DEBUG] First 50 chars: " << snippet.substr(0, std::min((size_t)50, snippet.length())) << "..." << std::endl;
             }
             return snippet;
         } catch (const std::exception& e) {
-            std::cout << "[WRAPPER DEBUG] getSnippet std::exception: " << e.what() << std::endl;
-            std::cout << "[WRAPPER DEBUG] Exception type: " << typeid(e).name() << std::endl;
+            std::cout << "[WRAPPER DEBUG] ❌ FAILED: std::exception: " << e.what() << std::endl;
             return "";
         } catch (const std::string& s) {
-            std::cout << "[WRAPPER DEBUG] getSnippet string exception: " << s << std::endl;
+            std::cout << "[WRAPPER DEBUG] ❌ FAILED: string exception: " << s << std::endl;
             return "";
         } catch (...) {
-            std::cout << "[WRAPPER DEBUG] getSnippet unknown exception" << std::endl;
+            std::cout << "[WRAPPER DEBUG] ❌ FAILED: unknown exception" << std::endl;
             return "";
         }
     }

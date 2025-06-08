@@ -89,15 +89,22 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	# SUGGESTION.CPP - Whitelist all Xapian-supported languages, use 'none' for all others
 	sed -i 's/m_stemmer = Xapian::Stem(languageLocale.getLanguage());/{ std::string stemLang = languageLocale.getLanguage(); static const std::set<std::string> supportedLangs = {"ar", "hy", "eu", "ca", "da", "nl", "en", "fi", "fr", "de", "el", "hi", "hu", "id", "ga", "it", "lt", "ne", "no", "pt", "ro", "ru", "sr", "es", "sv", "tr"}; if (supportedLangs.find(stemLang) != supportedLangs.end()) { m_stemmer = Xapian::Stem(stemLang); } else { m_stemmer = Xapian::Stem("none"); } }/' libzim-*/src/suggestion.cpp
 	# @echo "=== APPLYING ROBUST WASM SNIPPET FIX ==="
+
 	# SEARCH_ITERATOR.CPP - Use node-libzim approach: robust exception handling for WASM
-	# This allows HTML parser to work properly and Xapian to generate contextual snippets
-	# Step 1: Use simple catch-all for HTML parser (more robust than specific exception types in WASM)
-	# sed -i 's/} catch (...) {}/} catch (...) {\n            \/\/ HTML parser exceptions (bool control flow + others) - continue with whatever was parsed\n        }/' libzim-*/src/search_iterator.cpp
-	# Step 2: Add comprehensive exception handling around Xapian snippet generation
-	# sed -i 's/return internal->mp_mset->snippet(/try {\n                \/\/ Try Xapian snippet generation with parsed HTML\n                return internal->mp_mset->snippet(/' libzim-*/src/search_iterator.cpp
-	# Step 3: Add smart fallback that tries to preserve context when Xapian fails
-	# sed -i '/\/\*flags=\*\/0);/a\            } catch (...) {\n                \/\/ WASM FALLBACK: If Xapian snippet fails, try to extract context manually\n                std::string htmlText = htmlParser.dump;\n                if (htmlText.empty()) {\n                    \/\/ If HTML parser failed completely, try raw content\n                    htmlText = entry.getItem().getData();\n                }\n                \n                \/\/ Simple context extraction - look for text around search terms if possible\n                \/\/ For now, return first reasonable chunk of text content\n                if (htmlText.length() > 500) {\n                    return htmlText.substr(0, 500) + "...";\n                } else {\n                    return htmlText;\n                }\n            }' libzim-*/src/search_iterator.cpp
-	# @echo "=== VERIFYING PATCHES APPLIED ==="
+	@echo "=== APPLYING WASM-SAFE HTML PARSER PATCHES ==="
+	# Patch MyHtmlParser to remove problematic exceptions
+	@echo "Patching myhtmlparse.cc to remove bool exceptions..."
+	# Replace the "throw true" in closing_tag for </body>
+	sed -i 's/throw true;/return;/g' libzim-9.3.0/src/xapian/myhtmlparse.cc
+	# Replace the "throw newcharset" with a more graceful approach
+	sed -i 's/throw newcharset;/return;/g' libzim-9.3.0/src/xapian/myhtmlparse.cc	
+
+	# Verify the patches were applied
+	@echo "Checking for remaining problematic throws..."
+	@grep -n "throw.*true\|throw.*false\|throw.*newcharset" libzim-9.3.0/src/xapian/myhtmlparse.cc || echo "All throws removed successfully!"
+	@echo "MyHtmlParser patched for WASM compatibility"
+	@echo ""
+
 	@echo "=== APPLYING DIAGNOSTIC LOGGING PATCHES ==="
 	# Add iostream header for debug output
 	sed -i '/#include <zim\/error.h>/a #include <iostream>' libzim-9.3.0/src/search_iterator.cpp
@@ -133,19 +140,17 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	'' \
 	'        std::cerr << "[SNIPPET DEBUG] No stored snippet, generating from content..." << std::endl;' \
 	'        Entry& entry = internal->get_entry();' \
-	'        ' \
+	'    	' \
 	'        try {' \
 	'            std::cerr << "[SNIPPET DEBUG] Getting entry item data..." << std::endl;' \
 	'            zim::MyHtmlParser htmlParser;' \
 	'            std::string content = entry.getItem().getData();' \
 	'            std::cerr << "[SNIPPET DEBUG] Got content: " << content.length() << " bytes" << std::endl;' \
-	'            ' \
+	'        	' \
 	'            try {' \
 	'                std::cerr << "[SNIPPET DEBUG] Starting HTML parsing..." << std::endl;' \
 	'                htmlParser.parse_html(content, "UTF-8", true);' \
 	'                std::cerr << "[SNIPPET DEBUG] HTML parsing completed successfully" << std::endl;' \
-	'            } catch (const bool& b) {' \
-	'                std::cerr << "[SNIPPET DEBUG] Caught bool exception: " << b << " (expected for </body>)" << std::endl;' \
 	'            } catch (const std::string& s) {' \
 	'                std::cerr << "[SNIPPET DEBUG] Caught string exception (charset): " << s << std::endl;' \
 	'            } catch (const std::exception& e) {' \
@@ -153,22 +158,22 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	'            } catch (...) {' \
 	'                std::cerr << "[SNIPPET DEBUG] Caught unknown exception during HTML parsing" << std::endl;' \
 	'            }' \
-	'            ' \
+	'        	' \
 	'            std::cerr << "[SNIPPET DEBUG] HTML dump length after parsing: " << htmlParser.dump.length() << " chars" << std::endl;' \
 	'            if (htmlParser.dump.length() > 0) {' \
 	'                std::cerr << "[SNIPPET DEBUG] First 100 chars of dump: " << htmlParser.dump.substr(0, 100) << "..." << std::endl;' \
 	'            }' \
-	'            ' \
+	'        	' \
 	'            try {' \
 	'                std::cerr << "[SNIPPET DEBUG] Calling Xapian snippet generation..." << std::endl;' \
 	'                std::cerr << "[SNIPPET DEBUG] MSet pointer valid: " << (internal->mp_mset != nullptr) << std::endl;' \
 	'                std::cerr << "[SNIPPET DEBUG] Stemmer language: " << internal->mp_internalDb->m_stemmer.get_description() << std::endl;' \
-	'                ' \
+	'            	' \
 	'                std::string snippet = internal->mp_mset->snippet(htmlParser.dump,' \
 	'                                              500,' \
 	'                                              internal->mp_internalDb->m_stemmer,' \
 	'                                              0);' \
-	'                ' \
+	'            	' \
 	'                std::cerr << "[SNIPPET DEBUG] Xapian snippet generated successfully: " << snippet.length() << " chars" << std::endl;' \
 	'                if (snippet.length() > 0) {' \
 	'                    std::cerr << "[SNIPPET DEBUG] Snippet preview: " << snippet.substr(0, 100) << "..." << std::endl;' \
@@ -182,14 +187,14 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	'            } catch (...) {' \
 	'                std::cerr << "[SNIPPET DEBUG] Caught unknown exception from Xapian snippet()" << std::endl;' \
 	'            }' \
-	'            ' \
+	'        	' \
 	'            std::cerr << "[SNIPPET DEBUG] Falling back to manual snippet extraction" << std::endl;' \
 	'            std::string htmlText = htmlParser.dump;' \
 	'            if (htmlText.empty()) {' \
 	'                std::cerr << "[SNIPPET DEBUG] HTML dump empty, using raw content" << std::endl;' \
 	'                htmlText = content;' \
 	'            }' \
-	'            ' \
+	'        	' \
 	'            if (htmlText.length() > 500) {' \
 	'                std::string fallback = htmlText.substr(0, 500) + "...";' \
 	'                std::cerr << "[SNIPPET DEBUG] Returning fallback snippet: " << fallback.length() << " chars" << std::endl;' \
@@ -215,8 +220,7 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	'        std::cerr << "[SNIPPET DEBUG] Caught unknown exception at top level" << std::endl;' \
 	'        return "";' \
 	'    }' \
-	'}' \
-	> libzim-9.3.0/src/snippet_diagnostic.tmp
+    > libzim-9.3.0/src/snippet_diagnostic.tmp
 	# Use sed to remove the original getSnippet method completely, then append our diagnostic version
 	@echo "Replacing getSnippet() method with diagnostic version..."
 	@sed '/^std::string SearchIterator::getSnippet() const {$$/,/^}$$/d' libzim-9.3.0/src/search_iterator.cpp > libzim-9.3.0/src/search_iterator_temp.cpp
