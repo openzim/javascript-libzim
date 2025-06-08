@@ -15,6 +15,7 @@ https://download.openzim.org/release/javascript-libzim/.
 * Comprehensive README update including API documentation by @Jaifroid
 * Provision of practical JS examples of search and suggestions by @Jaifroid
 * Added technical implementation details for snippets by @Jaifroid
+* Enhanced prototype with testing of Suggestions, and Search with snippets
 
 ## Javascript Libzim v0.8 (2025-05-31)
 
