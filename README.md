@@ -17,7 +17,7 @@ https://openzim.github.io/javascript-libzim/tests/test_large_file_access/.
 ## Nightly and Release versions
 
 WASM and ASM versions are built nightly from the binaries provided (nightly) by [kiwix-build](https://github.com/kiwix/kiwix-build). The artefacts are
-made available at https://download.openzim.org/nightly/ (if tests pass). Artefacts for PRs and pushes are attached to the respective workflow run.
+made available at https://download.openzim.org/nightly/ (if tests pass). Artefacts for PRs and pushes are attached to the respective workflow run. **Please note that currently, versions built form precompiled binaries lack the snippets support, because this support relies on a patch to the source code to override exceptions-based programme flow which cannot be handled well in WASM.** Therefore, to use the full functionality, it is currently necessary to compile from source using, e.g. `docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) docker-emscripten-libzim:v3 make`.
 
 Released versions are published both in [Releases](https://github.com/openzim/javascript-libzim/releases) and at https://download.openzim.org/release/javascript-libzim/.
 
@@ -27,6 +27,165 @@ to and received from the Worker via [`window.postMessage()`](https://developer.m
 
 You can change the File Systems and other parameters in the provided [Makefile](https://github.com/openzim/javascript-libzim/blob/main/Makefile) in
 this Repository. This recipe needs to be run in an Emscripten-configured system or a customized Emscripten container (see below).
+
+## JavaScript API Bindings
+
+This section documents the JavaScript API bindings that are available after loading the compiled W/ASM module. The bindings provide access to libzim's core functionality including archive loading, content access, and search capabilities.
+
+### Archive Management
+
+#### `Module.loadArchive(filename: string): void`
+Loads a ZIM archive for subsequent operations.
+```javascript
+Module.loadArchive("path/to/archive.zim");
+```
+
+#### `Module.getArticleCount(): number`
+Returns the total number of articles in the loaded archive.
+```javascript
+const count = Module.getArticleCount();
+```
+
+### Content Access
+
+#### `Module.getEntryByPath(path: string): EntryWrapper | null`
+Retrieves a specific entry by its path in the ZIM archive.
+```javascript
+const entry = Module.getEntryByPath("A/Wikipedia");
+if (entry) {
+    console.log(entry.getTitle());
+}
+```
+
+### Entry Wrapper Class
+
+The `EntryWrapper` class provides access to ZIM entries (articles, redirects, etc.):
+
+- `getPath(): string` - Returns the entry's path
+- `getTitle(): string` - Returns the entry's title
+- `isRedirect(): boolean` - Returns true if the entry is a redirect
+- `getRedirectEntry(): EntryWrapper` - Returns the target entry for redirects
+- `getItem(follow: boolean): ItemWrapper` - Returns the item content
+
+### Item Wrapper Class
+
+The `ItemWrapper` class provides access to the actual content of entries:
+
+- `getData(): BlobWrapper` - Returns the content as binary data
+- `getMimetype(): string` - Returns the MIME type of the content
+
+### Blob Wrapper Class
+
+The `BlobWrapper` class handles binary content:
+
+- `getContent(): Uint8Array` - Returns the content as a typed array
+
+### Search Functionality
+
+#### Basic Full-Text Search
+
+#### `Module.search(query: string, maxResults: number): vector<EntryWrapper>`
+Performs basic full-text search returning entry paths.
+```javascript
+const results = Module.search("quantum physics", 20);
+for (let i = 0; i < results.size(); i++) {
+    const entry = results.get(i);
+    console.log(entry.getTitle(), entry.getPath());
+}
+```
+
+**Usage Example:** See [javascript_search_usage_example.js](javascript_search_usage_example.js) for comprehensive examples.
+
+#### Enhanced Search with Snippets
+
+#### `Module.searchWithSnippets(query: string, maxResults: number): vector<SearchIteratorWrapper>`
+Performs full-text search with content snippets and metadata.
+```javascript
+const results = Module.searchWithSnippets("quantum physics", 20);
+for (let i = 0; i < results.size(); i++) {
+    const result = results.get(i);
+    console.log(result.getTitle());
+    console.log(result.getSnippet()); // Content excerpt with highlighted terms
+    console.log("Score:", result.getScore());
+}
+```
+
+**Implementation Details:** See [SEARCH_SNIPPETS_IMPLEMENTATION.md](SEARCH_SNIPPETS_IMPLEMENTATION.md) for technical details about snippet generation.
+
+#### Search Iterator Wrapper Class
+
+The `SearchIteratorWrapper` class provides rich search results with content snippets:
+
+- `getPath(): string` - Returns the entry's path
+- `getTitle(): string` - Returns the entry's title
+- `getSnippet(): string` - Returns content excerpt with search term highlighting
+- `getScore(): number` - Returns search relevance score
+- `getWordCount(): number` - Returns word count of the article
+- `getEntry(): EntryWrapper` - Returns the full entry object
+
+#### Language-Aware Search
+
+#### `Module.searchWithLanguage(query: string, maxResults: number, language?: string): vector<EntryWrapper>`
+Performs search with optional language specification.
+```javascript
+const results = Module.searchWithLanguage("bonjour", 10, "fr");
+```
+
+### Suggestion/Autocomplete Functionality
+
+#### Simple Suggestion Function
+
+#### `Module.suggest(query: string, maxResults: number): vector<EntryWrapper>`
+Quick title-based suggestions for autocomplete functionality.
+```javascript
+const suggestions = Module.suggest("wik", 8);
+for (let i = 0; i < suggestions.size(); i++) {
+    const entry = suggestions.get(i);
+    console.log(entry.getTitle());
+}
+```
+
+#### Advanced Suggestion Classes
+
+#### `Module.SuggestionSearcher` Class
+Advanced suggestion functionality with more control:
+
+```javascript
+const searcher = new Module.SuggestionSearcher();
+const search = searcher.suggest("query");
+const matchCount = search.getEstimatedMatches();
+const results = search.getResults(0, 10);
+```
+
+**SuggestionSearcher Methods:**
+- `suggest(query: string): SuggestionSearchWrapper` - Creates a suggestion search
+
+**SuggestionSearchWrapper Methods:**
+- `getEstimatedMatches(): number` - Returns estimated total matches
+- `getResults(start: number, count: number): vector<EntryWrapper>` - Returns paginated results
+
+**Usage Example:** See [javascript_suggestions_usage_example.js](javascript_suggestions_usage_example.js) for comprehensive examples.
+
+### Vector Operations
+
+All search and suggestion functions return Emscripten vectors with these methods:
+
+- `size(): number` - Returns the number of results
+- `get(index: number): T` - Returns the item at the specified index
+
+### Error Handling
+
+All functions include proper error handling. Failed operations typically return:
+- `null` for single object returns (e.g., `getEntryByPath`)
+- Empty vectors for collection returns (e.g., `search`, `suggest`)
+- Empty strings for string returns (e.g., `getSnippet`)
+
+### Complete Usage Examples
+
+For comprehensive usage examples and patterns:
+- **Search functionality:** [javascript_search_usage_example.js](javascript_search_usage_example.js)
+- **Suggestion functionality:** [javascript_suggestions_usage_example.js](javascript_suggestions_usage_example.js)
+- **Search with snippets implementation:** [SEARCH_SNIPPETS_IMPLEMENTATION.md](SEARCH_SNIPPETS_IMPLEMENTATION.md)
 
 ## Steps to recompile from source with Docker
 
