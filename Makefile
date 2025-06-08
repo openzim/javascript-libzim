@@ -220,8 +220,7 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	# Use sed to remove the original getSnippet method completely, then append our diagnostic version
 	@echo "Replacing getSnippet() method with diagnostic version..."
 	@sed '/^std::string SearchIterator::getSnippet() const {$$/,/^}$$/d' libzim-9.3.0/src/search_iterator.cpp > libzim-9.3.0/src/search_iterator_temp.cpp
-	@cat libzim-9.3.0/src/snippet_diagnostic.tmp >> libzim-9.3.0/src/search_iterator_temp.cpp
-	@mv libzim-9.3.0/src/search_iterator_temp.cpp libzim-9.3.0/src/search_iterator.cpp
+	@sed '/^} \/\/ namespace zim$$/i\\n' libzim-9.3.0/src/search_iterator_temp.cpp | sed '/^} \/\/ namespace zim$$/e cat libzim-9.3.0/src/snippet_diagnostic.tmp' > libzim-9.3.0/src/search_iterator.cpp
 	@rm libzim-9.3.0/src/snippet_diagnostic.tmp
 	@echo "=== DIAGNOSTIC PATCHES APPLIED ==="
 	@echo "When you run the test after building, look for [SNIPPET DEBUG] messages in the console"
