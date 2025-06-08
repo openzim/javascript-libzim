@@ -7,13 +7,38 @@ WASM binary (`libzim.a`) from scratch, but from version 0.1, we have been using 
 ASM applications. Release packages can be obtained from [Releases](https://github.com/openzim/javascript-libzim/releases) or from
 https://download.openzim.org/release/javascript-libzim/.
 
-## Javascript Libzim v0.6 (2023-10-13)
+## Javascript Libzim v0.9 (2025-06-08)
+
+* Build W/ASM from libzim 9.3.0 source code (https://download.openzim.org/release/libzim/libzim-9.3.0.tar.xz)
+* Fix errors in stemming factory for W/ASM build with newest ZIMs by @Jaifroid in #93
+* Add snippets to full-text search bindings by @Jaifroid in #96
+* Comprehensive README update including API documentation by @Jaifroid
+* Provision of practical JS examples of search and suggestions by @Jaifroid
+* Added technical implementation details for snippets by @Jaifroid
+* Enhanced prototype with testing of Suggestions, and Search with snippets
+
+## Javascript Libzim v0.8 (2025-05-31)
+
+* Build W/ASM with libzim_wasm-emscripten v9.3.0-4 (https://download.openzim.org/release/libzim/libzim_wasm-emscripten-9.3.0-4.tar.gz)
+* Run nightly builds after kiwix-build by @Jaifroid in #83
+* Fix race condition in tests by @Jaifroid in #86
+* Add suggestions binding by @Jaifroid in #88
+
+## Javascript Libzim v0.7 (2025-04-18)
+
+* Build W/ASM with libzim_wasm-emscripten v9.2.3-1 (https://download.openzim.org/release/libzim/libzim_wasm-emscripten-9.2.3-1.tar.gz)
+* Picking files from `test/prototype` by @Rishabhg71 in #70
+* Update README.md by @Jaifroid in #68
+* Fix npm vulnerabilities 04-25 by @Jaifroid in #76
+* Create libzim_version dispatch variable by @Jaifroid in #79
+
+## Javascript Libzim v0.6 (2023-12-07)
 
 * Extended Unit testing for libzim-[w]asm.*.js by @Rishabhg71
 * Compiling production files with DISABLE_EXCEPTION_CATCHING set to False by @Rishabhg71
 
-
 ## Javascript Libzim v0.5 (2023-10-13)
+
 This release is built with Emscripten 3.4.1 and builds the new libzim 9.0.0 from libzim binaries.
 
 * Create Unit tests for builds by @Jaifroid in #62
