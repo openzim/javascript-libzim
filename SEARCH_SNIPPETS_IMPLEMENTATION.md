@@ -2,9 +2,11 @@
 
 ## 🎯 Overview
 
+**Important: The functionality documented here only currently exists in libzim W/ASM versions _built from source_. This is because it depends on a few patches of the source code to prevent unhandled exceptions in the W/ASM port. The patches can be seen in the Makefile.**
+
 This document explains the implementation of **content snippets** for search results in javascript-libzim. Content snippets provide contextual text excerpts around search terms, similar to Google search results and Kiwix Desktop functionality.
 
-The implementation extends libzim's full-text search capabilities to extract and highlight relevant content from Wikipedia articles and other ZIM file content.
+The implementation extends javascript-libzim's full-text search capabilities to extract and highlight relevant content from Wikipedia articles and other ZIM file content.
 
 ## 🏗️ Architecture
 
