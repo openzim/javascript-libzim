@@ -84,7 +84,7 @@ private:
     zim::Entry m_entry;
 };
 
-// SearchIterator wrapper - now relies on the fixed libzim implementation
+// SearchIterator wrapper - Clean version relying on the fixed libzim implementation
 class SearchIteratorWrapper {
 public:
     SearchIteratorWrapper(const zim::SearchIterator& iterator)
@@ -99,22 +99,14 @@ public:
     }
     
     std::string getSnippet() const {
-        std::cout << "[WRAPPER DEBUG] SearchIteratorWrapper::getSnippet() called" << std::endl;
         try {
-            std::string snippet = m_iterator.getSnippet();
-            std::cout << "[WRAPPER DEBUG] ✅ SUCCESS: Got snippet from iterator: " << snippet.length() << " chars" << std::endl;
-            if (snippet.length() > 0) {
-                std::cout << "[WRAPPER DEBUG] First 50 chars: " << snippet.substr(0, std::min((size_t)50, snippet.length())) << "..." << std::endl;
-            }
-            return snippet;
+            return m_iterator.getSnippet();
         } catch (const std::exception& e) {
-            std::cout << "[WRAPPER DEBUG] ❌ FAILED: std::exception: " << e.what() << std::endl;
-            return "";
-        } catch (const std::string& s) {
-            std::cout << "[WRAPPER DEBUG] ❌ FAILED: string exception: " << s << std::endl;
+            // Log only actual errors, not normal operation
+            std::cout << "SearchIterator::getSnippet() error: " << e.what() << std::endl;
             return "";
         } catch (...) {
-            std::cout << "[WRAPPER DEBUG] ❌ FAILED: unknown exception" << std::endl;
+            std::cout << "SearchIterator::getSnippet() unknown error" << std::endl;
             return "";
         }
     }
@@ -247,7 +239,7 @@ std::vector<EntryWrapper> search(std::string text, int numResults) {
     }
 }
 
-// Enhanced search with snippets - should now work properly with the libzim fix
+// Enhanced search with snippets - now works properly with the libzim fix
 std::vector<SearchIteratorWrapper> searchWithSnippets(std::string text, int numResults) {
     try {
         auto searcher = zim::Searcher(*g_archive);
