@@ -10,7 +10,11 @@ https://download.openzim.org/release/javascript-libzim/.
 ## Javascript Libzim v0.9 (2025-06-08)
 
 * Build W/ASM from libzim 9.3.0 source code (https://download.openzim.org/release/libzim/libzim-9.3.0.tar.xz)
-* TODO
+* Fix errors in stemming factory for W/ASM build with newest ZIMs by @Jaifroid in #93
+* Add snippets to full-text search bindings by @Jaifroid in #96
+* Comprehensive README update including API documentation by @Jaifroid
+* Provision of practical JS examples of search and suggestions by @Jaifroid
+* Added technical implementation details for snippets by @Jaifroid
 
 ## Javascript Libzim v0.8 (2025-05-31)
 
