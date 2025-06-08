@@ -73,7 +73,7 @@ build/lib/libxapian.a : build/lib/libz.a
         # Some options coming from https://github.com/xapian/xapian/tree/master/xapian-core/emscripten
 	# cd xapian-core-1.4.18; emconfigure ./configure --prefix=`pwd`/../build "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" CPPFLAGS='-DFLINTLOCK_USE_FLOCK' CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti' --disable-backend-honey --disable-backend-inmemory --disable-shared --disable-backend-remote
 	cd xapian-core-*/ ; emconfigure ./configure --prefix=`pwd`/../build "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" --disable-shared --disable-backend-remote
-	cd xapian-core-*/ ; emmake make "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib -std=c++14" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib -std=c++14"
+	cd xapian-core-*/ ; emmake make "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib -std=c++14" "CXXFLAGS="-I`pwd`/../build/include -L`pwd`/../build/lib -std=c++14"
 	cd xapian-core-*/ ; emmake make install
 
 build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a build/lib/libicudata.so build/lib/libxapian.a
@@ -140,13 +140,13 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	'' \
 	'        std::cerr << "[SNIPPET DEBUG] No stored snippet, generating from content..." << std::endl;' \
 	'        Entry& entry = internal->get_entry();' \
-	'    	' \
+	'' \
 	'        try {' \
 	'            std::cerr << "[SNIPPET DEBUG] Getting entry item data..." << std::endl;' \
 	'            zim::MyHtmlParser htmlParser;' \
 	'            std::string content = entry.getItem().getData();' \
 	'            std::cerr << "[SNIPPET DEBUG] Got content: " << content.length() << " bytes" << std::endl;' \
-	'        	' \
+	'' \
 	'            try {' \
 	'                std::cerr << "[SNIPPET DEBUG] Starting HTML parsing..." << std::endl;' \
 	'                htmlParser.parse_html(content, "UTF-8", true);' \
@@ -158,12 +158,12 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	'            } catch (...) {' \
 	'                std::cerr << "[SNIPPET DEBUG] Caught unknown exception during HTML parsing" << std::endl;' \
 	'            }' \
-	'        	' \
+	'' \
 	'            std::cerr << "[SNIPPET DEBUG] HTML dump length after parsing: " << htmlParser.dump.length() << " chars" << std::endl;' \
 	'            if (htmlParser.dump.length() > 0) {' \
 	'                std::cerr << "[SNIPPET DEBUG] First 100 chars of dump: " << htmlParser.dump.substr(0, 100) << "..." << std::endl;' \
 	'            }' \
-	'        	' \
+	'' \
 	'            try {' \
 	'                std::cerr << "[SNIPPET DEBUG] Calling Xapian snippet generation..." << std::endl;' \
 	'                std::cerr << "[SNIPPET DEBUG] MSet pointer valid: " << (internal->mp_mset != nullptr) << std::endl;' \
@@ -187,14 +187,14 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	'            } catch (...) {' \
 	'                std::cerr << "[SNIPPET DEBUG] Caught unknown exception from Xapian snippet()" << std::endl;' \
 	'            }' \
-	'        	' \
+	'' \
 	'            std::cerr << "[SNIPPET DEBUG] Falling back to manual snippet extraction" << std::endl;' \
 	'            std::string htmlText = htmlParser.dump;' \
 	'            if (htmlText.empty()) {' \
 	'                std::cerr << "[SNIPPET DEBUG] HTML dump empty, using raw content" << std::endl;' \
 	'                htmlText = content;' \
 	'            }' \
-	'        	' \
+	'' \
 	'            if (htmlText.length() > 500) {' \
 	'                std::string fallback = htmlText.substr(0, 500) + "...";' \
 	'                std::cerr << "[SNIPPET DEBUG] Returning fallback snippet: " << fallback.length() << " chars" << std::endl;' \
@@ -220,7 +220,8 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	'        std::cerr << "[SNIPPET DEBUG] Caught unknown exception at top level" << std::endl;' \
 	'        return "";' \
 	'    }' \
-    > libzim-9.3.0/src/snippet_diagnostic.tmp
+	'}' \
+	> libzim-9.3.0/src/snippet_diagnostic.tmp
 	# Use sed to remove the original getSnippet method completely, then append our diagnostic version
 	@echo "Replacing getSnippet() method with diagnostic version..."
 	@sed '/^std::string SearchIterator::getSnippet() const {$$/,/^}$$/d' libzim-9.3.0/src/search_iterator.cpp > libzim-9.3.0/src/search_iterator_temp.cpp
@@ -228,7 +229,42 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	@rm libzim-9.3.0/src/snippet_diagnostic.tmp
 	@echo "=== DIAGNOSTIC PATCHES APPLIED ==="
 	@echo "When you run the test after building, look for [SNIPPET DEBUG] messages in the console"
-	@echo "=== VERIFYING LIBZIM BUILD ==="	
+	
+	@echo "=== APPLYING SUGGESTION ITERATOR DIAGNOSTIC PATCHES ==="
+	# Add iostream header for debug output to suggestion_iterator.cpp
+	sed -i '/#include "suggestion_iterator.h"/a #include <iostream>' libzim-9.3.0/src/suggestion_iterator.cpp
+	
+	# Replace the simple getIndexSnippet method with a diagnostic version
+	sed -i '/^std::string SuggestionIterator::getIndexSnippet() const {$$/,/^}$$/c\
+	std::string SuggestionIterator::getIndexSnippet() const {\
+		if (! mp_internal) {\
+			return "";\
+		}\
+	\
+		try {\
+			std::cerr << "[SUGGESTION DEBUG] Calling Xapian snippet for suggestion..." << std::endl;\
+			std::string snippet = mp_internal->mp_mset->snippet(getIndexTitle(), 500, mp_internal->mp_internalDb->m_stemmer);\
+			std::cerr << "[SUGGESTION DEBUG] Suggestion snippet generated: " << snippet.length() << " chars" << std::endl;\
+			if (snippet.length() > 0) {\
+				std::cerr << "[SUGGESTION DEBUG] Snippet preview: " << snippet.substr(0, 50) << "..." << std::endl;\
+			}\
+			return snippet;\
+		} catch (const Xapian::Error& e) {\
+			std::cerr << "[SUGGESTION DEBUG] Xapian error in snippet generation: " << e.get_description() << std::endl;\
+			return "";\
+		} catch (const std::exception& e) {\
+			std::cerr << "[SUGGESTION DEBUG] Exception in snippet generation: " << e.what() << std::endl;\
+			return "";\
+		} catch (...) {\
+			std::cerr << "[SUGGESTION DEBUG] Unknown exception in snippet generation" << std::endl;\
+			return "";\
+		}\
+	}' libzim-9.3.0/src/suggestion_iterator.cpp
+    
+    @echo "Suggestion iterator patched with detailed exception handling"
+    @echo ""
+    
+    @echo "=== VERIFYING LIBZIM BUILD ==="	
 	@echo "search.cpp - Headers added: $$(grep -c '#include <set>' libzim-*/src/search.cpp || echo '0')"
 	@echo "suggestion.cpp - Headers added: $$(grep -c '#include <set>' libzim-*/src/suggestion.cpp || echo '0')"
 	@echo "search.cpp - Whitelist added: $$(grep -c 'supportedLangs' libzim-*/src/search.cpp || echo '0')"
