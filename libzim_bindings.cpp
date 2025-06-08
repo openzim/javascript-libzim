@@ -99,14 +99,26 @@ public:
     }
     
     std::string getSnippet() const {
-        // Now that we've fixed the libzim source, this should work properly
+        std::cout << "[WRAPPER DEBUG] SearchIteratorWrapper::getSnippet() called" << std::endl;
         try {
-            return m_iterator.getSnippet();
+            std::string snippet = m_iterator.getSnippet();
+            std::cout << "[WRAPPER DEBUG] Got snippet from iterator: " << snippet.length() << " chars" << std::endl;
+            if (snippet.length() > 0) {
+                std::cout << "[WRAPPER DEBUG] First 50 chars: " << snippet.substr(0, 50) << "..." << std::endl;
+            }
+            return snippet;
         } catch (const std::exception& e) {
-            std::cout << "getSnippet error: " << e.what() << std::endl;
+            std::cout << "[WRAPPER DEBUG] getSnippet std::exception: " << e.what() << std::endl;
+            std::cout << "[WRAPPER DEBUG] Exception type: " << typeid(e).name() << std::endl;
+            return "";
+        } catch (const bool& b) {
+            std::cout << "[WRAPPER DEBUG] getSnippet bool exception: " << b << std::endl;
+            return "";
+        } catch (const std::string& s) {
+            std::cout << "[WRAPPER DEBUG] getSnippet string exception: " << s << std::endl;
             return "";
         } catch (...) {
-            std::cout << "getSnippet unknown error" << std::endl;
+            std::cout << "[WRAPPER DEBUG] getSnippet unknown exception" << std::endl;
             return "";
         }
     }

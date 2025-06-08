@@ -88,16 +88,144 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	sed -i 's/m_stemmer = Xapian::Stem(languageLocale.getLanguage());/{ std::string stemLang = languageLocale.getLanguage(); static const std::set<std::string> supportedLangs = {"ar", "hy", "eu", "ca", "da", "nl", "en", "fi", "fr", "de", "el", "hi", "hu", "id", "ga", "it", "lt", "ne", "no", "pt", "ro", "ru", "sr", "es", "sv", "tr"}; if (supportedLangs.find(stemLang) != supportedLangs.end()) { m_stemmer = Xapian::Stem(stemLang); } else { m_stemmer = Xapian::Stem("none"); } }/' libzim-*/src/search.cpp
 	# SUGGESTION.CPP - Whitelist all Xapian-supported languages, use 'none' for all others
 	sed -i 's/m_stemmer = Xapian::Stem(languageLocale.getLanguage());/{ std::string stemLang = languageLocale.getLanguage(); static const std::set<std::string> supportedLangs = {"ar", "hy", "eu", "ca", "da", "nl", "en", "fi", "fr", "de", "el", "hi", "hu", "id", "ga", "it", "lt", "ne", "no", "pt", "ro", "ru", "sr", "es", "sv", "tr"}; if (supportedLangs.find(stemLang) != supportedLangs.end()) { m_stemmer = Xapian::Stem(stemLang); } else { m_stemmer = Xapian::Stem("none"); } }/' libzim-*/src/suggestion.cpp
-	@echo "=== APPLYING ROBUST WASM SNIPPET FIX ==="
+	# @echo "=== APPLYING ROBUST WASM SNIPPET FIX ==="
 	# SEARCH_ITERATOR.CPP - Use node-libzim approach: robust exception handling for WASM
 	# This allows HTML parser to work properly and Xapian to generate contextual snippets
 	# Step 1: Use simple catch-all for HTML parser (more robust than specific exception types in WASM)
-	sed -i 's/} catch (...) {}/} catch (...) {\n            \/\/ HTML parser exceptions (bool control flow + others) - continue with whatever was parsed\n        }/' libzim-*/src/search_iterator.cpp
+	# sed -i 's/} catch (...) {}/} catch (...) {\n            \/\/ HTML parser exceptions (bool control flow + others) - continue with whatever was parsed\n        }/' libzim-*/src/search_iterator.cpp
 	# Step 2: Add comprehensive exception handling around Xapian snippet generation
-	sed -i 's/return internal->mp_mset->snippet(/try {\n                \/\/ Try Xapian snippet generation with parsed HTML\n                return internal->mp_mset->snippet(/' libzim-*/src/search_iterator.cpp
+	# sed -i 's/return internal->mp_mset->snippet(/try {\n                \/\/ Try Xapian snippet generation with parsed HTML\n                return internal->mp_mset->snippet(/' libzim-*/src/search_iterator.cpp
 	# Step 3: Add smart fallback that tries to preserve context when Xapian fails
-	sed -i '/\/\*flags=\*\/0);/a\            } catch (...) {\n                \/\/ WASM FALLBACK: If Xapian snippet fails, try to extract context manually\n                std::string htmlText = htmlParser.dump;\n                if (htmlText.empty()) {\n                    \/\/ If HTML parser failed completely, try raw content\n                    htmlText = entry.getItem().getData();\n                }\n                \n                \/\/ Simple context extraction - look for text around search terms if possible\n                \/\/ For now, return first reasonable chunk of text content\n                if (htmlText.length() > 500) {\n                    return htmlText.substr(0, 500) + "...";\n                } else {\n                    return htmlText;\n                }\n            }' libzim-*/src/search_iterator.cpp
-	@echo "=== VERIFYING PATCHES APPLIED ==="
+	# sed -i '/\/\*flags=\*\/0);/a\            } catch (...) {\n                \/\/ WASM FALLBACK: If Xapian snippet fails, try to extract context manually\n                std::string htmlText = htmlParser.dump;\n                if (htmlText.empty()) {\n                    \/\/ If HTML parser failed completely, try raw content\n                    htmlText = entry.getItem().getData();\n                }\n                \n                \/\/ Simple context extraction - look for text around search terms if possible\n                \/\/ For now, return first reasonable chunk of text content\n                if (htmlText.length() > 500) {\n                    return htmlText.substr(0, 500) + "...";\n                } else {\n                    return htmlText;\n                }\n            }' libzim-*/src/search_iterator.cpp
+	# @echo "=== VERIFYING PATCHES APPLIED ==="
+	@echo "=== APPLYING DIAGNOSTIC LOGGING PATCHES ==="
+	# Add iostream header for debug output
+	sed -i '/#include <zim\/error.h>/a #include <iostream>' libzim-9.3.0/src/search_iterator.cpp
+	# Create the diagnostic getSnippet method in a temporary file
+	printf '%s\n' \
+	'std::string SearchIterator::getSnippet() const {' \
+	'    std::cerr << "[SNIPPET DEBUG] getSnippet() called" << std::endl;' \
+	'    if ( ! internal ) {' \
+	'        std::cerr << "[SNIPPET DEBUG] No internal data, returning empty" << std::endl;' \
+	'        return "";' \
+	'    }' \
+	'' \
+	'    try {' \
+	'        // Check for stored snippets first' \
+	'        std::cerr << "[SNIPPET DEBUG] Checking for stored snippets..." << std::endl;' \
+	'        if ( ! internal->mp_internalDb->hasValuesmap() )' \
+	'        {' \
+	'            std::cerr << "[SNIPPET DEBUG] No valuesmap, checking legacy value slot 1" << std::endl;' \
+	'            std::string stored_snippet = internal->get_document().get_value(1);' \
+	'            if ( ! stored_snippet.empty() ) {' \
+	'                std::cerr << "[SNIPPET DEBUG] Found stored snippet: " << stored_snippet.length() << " chars" << std::endl;' \
+	'                return stored_snippet;' \
+	'            }' \
+	'            std::cerr << "[SNIPPET DEBUG] No stored snippet in legacy slot" << std::endl;' \
+	'        }' \
+	'        else if ( internal->mp_internalDb->hasValue("snippet") )' \
+	'        {' \
+	'            std::cerr << "[SNIPPET DEBUG] Has snippet value in valuesmap" << std::endl;' \
+	'            auto snippet = internal->get_document().get_value(internal->mp_internalDb->valueSlot("snippet"));' \
+	'            std::cerr << "[SNIPPET DEBUG] Found stored snippet: " << snippet.length() << " chars" << std::endl;' \
+	'            return snippet;' \
+	'        }' \
+	'' \
+	'        std::cerr << "[SNIPPET DEBUG] No stored snippet, generating from content..." << std::endl;' \
+	'        Entry& entry = internal->get_entry();' \
+	'        ' \
+	'        try {' \
+	'            std::cerr << "[SNIPPET DEBUG] Getting entry item data..." << std::endl;' \
+	'            zim::MyHtmlParser htmlParser;' \
+	'            std::string content = entry.getItem().getData();' \
+	'            std::cerr << "[SNIPPET DEBUG] Got content: " << content.length() << " bytes" << std::endl;' \
+	'            ' \
+	'            try {' \
+	'                std::cerr << "[SNIPPET DEBUG] Starting HTML parsing..." << std::endl;' \
+	'                htmlParser.parse_html(content, "UTF-8", true);' \
+	'                std::cerr << "[SNIPPET DEBUG] HTML parsing completed successfully" << std::endl;' \
+	'            } catch (const bool& b) {' \
+	'                std::cerr << "[SNIPPET DEBUG] Caught bool exception: " << b << " (expected for </body>)" << std::endl;' \
+	'            } catch (const std::string& s) {' \
+	'                std::cerr << "[SNIPPET DEBUG] Caught string exception (charset): " << s << std::endl;' \
+	'            } catch (const std::exception& e) {' \
+	'                std::cerr << "[SNIPPET DEBUG] Caught std exception during HTML parsing: " << e.what() << std::endl;' \
+	'            } catch (...) {' \
+	'                std::cerr << "[SNIPPET DEBUG] Caught unknown exception during HTML parsing" << std::endl;' \
+	'            }' \
+	'            ' \
+	'            std::cerr << "[SNIPPET DEBUG] HTML dump length after parsing: " << htmlParser.dump.length() << " chars" << std::endl;' \
+	'            if (htmlParser.dump.length() > 0) {' \
+	'                std::cerr << "[SNIPPET DEBUG] First 100 chars of dump: " << htmlParser.dump.substr(0, 100) << "..." << std::endl;' \
+	'            }' \
+	'            ' \
+	'            try {' \
+	'                std::cerr << "[SNIPPET DEBUG] Calling Xapian snippet generation..." << std::endl;' \
+	'                std::cerr << "[SNIPPET DEBUG] MSet pointer valid: " << (internal->mp_mset != nullptr) << std::endl;' \
+	'                std::cerr << "[SNIPPET DEBUG] Stemmer language: " << internal->mp_internalDb->m_stemmer.get_description() << std::endl;' \
+	'                ' \
+	'                std::string snippet = internal->mp_mset->snippet(htmlParser.dump,' \
+	'                                              500,' \
+	'                                              internal->mp_internalDb->m_stemmer,' \
+	'                                              0);' \
+	'                ' \
+	'                std::cerr << "[SNIPPET DEBUG] Xapian snippet generated successfully: " << snippet.length() << " chars" << std::endl;' \
+	'                if (snippet.length() > 0) {' \
+	'                    std::cerr << "[SNIPPET DEBUG] Snippet preview: " << snippet.substr(0, 100) << "..." << std::endl;' \
+	'                }' \
+	'                return snippet;' \
+	'            } catch (const Xapian::Error& e) {' \
+	'                std::cerr << "[SNIPPET DEBUG] Caught Xapian::Error: " << e.get_description() << std::endl;' \
+	'                std::cerr << "[SNIPPET DEBUG] Error type: " << e.get_type() << ", context: " << e.get_context() << std::endl;' \
+	'            } catch (const std::exception& e) {' \
+	'                std::cerr << "[SNIPPET DEBUG] Caught std exception from Xapian: " << e.what() << std::endl;' \
+	'            } catch (...) {' \
+	'                std::cerr << "[SNIPPET DEBUG] Caught unknown exception from Xapian snippet()" << std::endl;' \
+	'            }' \
+	'            ' \
+	'            std::cerr << "[SNIPPET DEBUG] Falling back to manual snippet extraction" << std::endl;' \
+	'            std::string htmlText = htmlParser.dump;' \
+	'            if (htmlText.empty()) {' \
+	'                std::cerr << "[SNIPPET DEBUG] HTML dump empty, using raw content" << std::endl;' \
+	'                htmlText = content;' \
+	'            }' \
+	'            ' \
+	'            if (htmlText.length() > 500) {' \
+	'                std::string fallback = htmlText.substr(0, 500) + "...";' \
+	'                std::cerr << "[SNIPPET DEBUG] Returning fallback snippet: " << fallback.length() << " chars" << std::endl;' \
+	'                return fallback;' \
+	'            } else {' \
+	'                std::cerr << "[SNIPPET DEBUG] Returning full text as snippet: " << htmlText.length() << " chars" << std::endl;' \
+	'                return htmlText;' \
+	'            }' \
+	'        } catch (const std::exception& e) {' \
+	'            std::cerr << "[SNIPPET DEBUG] Caught exception in outer try: " << e.what() << std::endl;' \
+	'            return "";' \
+	'        } catch (...) {' \
+	'            std::cerr << "[SNIPPET DEBUG] Caught unknown exception in outer try" << std::endl;' \
+	'            return "";' \
+	'        }' \
+	'    } catch (Xapian::DatabaseError& e) {' \
+	'        std::cerr << "[SNIPPET DEBUG] Caught DatabaseError: " << e.get_description() << std::endl;' \
+	'        throw zim::ZimFileFormatError(e.get_description());' \
+	'    } catch (const std::exception& e) {' \
+	'        std::cerr << "[SNIPPET DEBUG] Caught exception at top level: " << e.what() << std::endl;' \
+	'        return "";' \
+	'    } catch (...) {' \
+	'        std::cerr << "[SNIPPET DEBUG] Caught unknown exception at top level" << std::endl;' \
+	'        return "";' \
+	'    }' \
+	'}' \
+	> libzim-9.3.0/src/snippet_diagnostic.tmp
+	# Use awk to replace the entire getSnippet method with our diagnostic version
+	@echo "Replacing getSnippet() method with diagnostic version..."
+	@awk '/^std::string SearchIterator::getSnippet\(\) const \{$$/{skip=1; print; system("cat libzim-9.3.0/src/snippet_diagnostic.tmp"); next} skip && /^\}$$/{skip=0; next} !skip' \
+        libzim-9.3.0/src/search_iterator.cpp > libzim-9.3.0/src/search_iterator_new.cpp
+	@mv libzim-9.3.0/src/search_iterator_new.cpp libzim-9.3.0/src/search_iterator.cpp
+	@rm libzim-9.3.0/src/snippet_diagnostic.tmp
+	@echo "=== DIAGNOSTIC PATCHES APPLIED ==="
+	@echo "When you run the test after building, look for [SNIPPET DEBUG] messages in the console"
+	@echo "=== VERIFYING LIBZIM BUILD ==="	
 	@echo "search.cpp - Headers added: $$(grep -c '#include <set>' libzim-*/src/search.cpp || echo '0')"
 	@echo "suggestion.cpp - Headers added: $$(grep -c '#include <set>' libzim-*/src/suggestion.cpp || echo '0')"
 	@echo "search.cpp - Whitelist added: $$(grep -c 'supportedLangs' libzim-*/src/search.cpp || echo '0')"
