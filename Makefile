@@ -217,11 +217,11 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	'    }' \
 	'}' \
 	> libzim-9.3.0/src/snippet_diagnostic.tmp
-	# Use awk to replace the entire getSnippet method with our diagnostic version
+	# Use sed to remove the original getSnippet method completely, then append our diagnostic version
 	@echo "Replacing getSnippet() method with diagnostic version..."
-	@awk '/^std::string SearchIterator::getSnippet\(\) const \{$$/{skip=1; print; system("cat libzim-9.3.0/src/snippet_diagnostic.tmp"); next} skip && /^\}$$/{skip=0; next} !skip' \
-        libzim-9.3.0/src/search_iterator.cpp > libzim-9.3.0/src/search_iterator_new.cpp
-	@mv libzim-9.3.0/src/search_iterator_new.cpp libzim-9.3.0/src/search_iterator.cpp
+	@sed '/^std::string SearchIterator::getSnippet() const {$$/,/^}$$/d' libzim-9.3.0/src/search_iterator.cpp > libzim-9.3.0/src/search_iterator_temp.cpp
+	@cat libzim-9.3.0/src/snippet_diagnostic.tmp >> libzim-9.3.0/src/search_iterator_temp.cpp
+	@mv libzim-9.3.0/src/search_iterator_temp.cpp libzim-9.3.0/src/search_iterator.cpp
 	@rm libzim-9.3.0/src/snippet_diagnostic.tmp
 	@echo "=== DIAGNOSTIC PATCHES APPLIED ==="
 	@echo "When you run the test after building, look for [SNIPPET DEBUG] messages in the console"
