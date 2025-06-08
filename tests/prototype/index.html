@@ -1,5 +1,5 @@
 <!doctype html>
-    <html>
+<html lang="en">
     <head><meta charset="utf-8"><title>Web Worker + file api zim reader</title></head>
     <body>
         <h1>Prototype to test libzim compiled with emscripten</h1>
@@ -19,7 +19,13 @@
     <br/>
     Search string : <input type="text" id="search" value="Ray">
     <br/>
-    <button type="button" id="btnCallSearch">Search</button>
+    <button type="button" id="btnCallSearch">Search (basic)</button>
+    <br/>
+    <button type="button" id="btnCallSuggest">Suggest</button>
+    <br/>
+    <button type="button" id="btnCallSearchWithSnippets">Search with Snippets (enhanced)</button>
+    <br/>
+    <button type="button" id="btnTestSnippetsDebug">Search with snippets (debug)</button> (returns five results for debugging purposes)
     <br/>
     <div id="status"></div>
     <br/>
@@ -44,6 +50,15 @@
 
     var btnCallSearch = document.getElementById('btnCallSearch');
     btnCallSearch.addEventListener('click', callSearch, false);
+
+    var btnCallSearchWithSnippets = document.getElementById('btnCallSearchWithSnippets');
+    btnCallSearchWithSnippets.addEventListener('click', callSearchWithSnippets, false);
+
+    var btnCallSuggest = document.getElementById('btnCallSuggest');
+    btnCallSuggest.addEventListener('click', callSuggest, false);
+
+    var btnTestSnippetsDebug = document.getElementById('btnTestSnippetsDebug');
+    btnTestSnippetsDebug.addEventListener('click', testSnippetsDebug, false);
 
     control.addEventListener("change", function(event) {
         // When the control has changed, there are new files
@@ -89,6 +104,146 @@
         worker.postMessage({action: "search", text: text}, [tmpMessageChannel.port2]);
     }
 
+    function callSearchWithSnippets() {
+        var tmpMessageChannel = new MessageChannel();
+        var text = document.getElementById("search").value;
+        var t0 = performance.now();
+        tmpMessageChannel.port1.onmessage = function(event2){
+            var t1 = performance.now();
+            var readTime = Math.round(t1 - t0);
+            
+            if (event2.data.error) {
+                document.getElementById("status").textContent = "Search with snippets failed: " + event2.data.error;
+                console.error("Search with snippets error:", event2.data.error);
+                return;
+            }
+            
+            var results = event2.data.results;
+            document.getElementById("status").textContent = "Search with snippets found " + results.length + " results";
+            var html = "<h3>Search Results with Snippets:</h3>";
+            for (var i=0; i<results.length; i++) {
+                var result = results[i];
+                html += "<div style='border: 1px solid #ccc; margin: 10px; padding: 10px;'>";
+                html += "<h4>" + (result.title || 'No title') + "</h4>";
+                html += "<p><strong>Path:</strong> " + result.path + "</p>";
+                html += "<p><strong>Score:</strong> " + result.score + " | <strong>Word Count:</strong> " + result.wordCount + "</p>";
+                html += "<p><strong>Snippet:</strong> " + (result.snippet || 'No snippet available') + "</p>";
+                html += "</div>";
+            }
+            window.frames[0].document.body.innerHTML = html;
+            console.log("search with snippets done by the webworker in " + readTime + " milliseconds", event2);
+        };
+        document.getElementById("status").textContent = "Searching with snippets...";
+        worker.postMessage({action: "searchWithSnippets", text: text}, [tmpMessageChannel.port2]);
+    }
+
+    function callSuggest() {
+        var tmpMessageChannel = new MessageChannel();
+        var text = document.getElementById("search").value;
+        var t0 = performance.now();
+        tmpMessageChannel.port1.onmessage = function(event2){
+            var t1 = performance.now();
+            var readTime = Math.round(t1 - t0);
+            var suggestions = event2.data.suggestions;
+            document.getElementById("status").textContent = "Suggest has found " + suggestions.length + " suggestions";
+            var html = "";
+            for (var i=0; i<suggestions.length; i++) {
+                html += suggestions[i].title + " (" + suggestions[i].path + ")<br/>";
+            }
+            window.frames[0].document.body.innerHTML = html;
+            console.log("suggest done by the webworker in " + readTime + " milliseconds", event2);
+        };
+        document.getElementById("status").textContent = "Getting suggestions...";
+        worker.postMessage({action: "suggest", text: text}, [tmpMessageChannel.port2]);
+    }
+
+    function testSnippetsDebug() {
+        var text = document.getElementById("search").value;
+        document.getElementById("status").textContent = "Running comprehensive snippet functionality debug...";
+        
+        var html = "<h2>🔍 Search Snippets Debug Analysis</h2>";
+        html += "<p><strong>Query:</strong> \"" + text + "\"</p>";
+        html += "<hr>";
+        
+        // Test basic search first
+        var tmpMessageChannel1 = new MessageChannel();
+        tmpMessageChannel1.port1.onmessage = function(event1) {
+            var basicResults = event1.data.entries;
+            html += "<h3>1. Basic Search Results (" + basicResults.length + " found):</h3>";
+            for (var i = 0; i < Math.min(3, basicResults.length); i++) {
+                html += "<div style='background: #f0f0f0; padding: 5px; margin: 5px;'>";
+                html += "Path: " + basicResults[i].path;
+                html += "</div>";
+            }
+            html += "<hr>";
+            
+            // Now test search with snippets
+            var tmpMessageChannel2 = new MessageChannel();
+            tmpMessageChannel2.port1.onmessage = function(event2) {
+                if (event2.data.error) {
+                    html += "<h3>❌ Search with Snippets - ERROR:</h3>";
+                    html += "<p style='color: red;'>" + event2.data.error + "</p>";
+                } else {
+                    var snippetResults = event2.data.results;
+                    html += "<h3>2. Search with Snippets Results (" + snippetResults.length + " found):</h3>";
+                    
+                    if (snippetResults.length === 0) {
+                        html += "<p style='color: orange;'>⚠️ No results returned from searchWithSnippets</p>";
+                    } else {
+                        for (var i = 0; i < Math.min(3, snippetResults.length); i++) {
+                            var result = snippetResults[i];
+                            html += "<div style='background: #e8f5e8; border: 1px solid #4CAF50; padding: 10px; margin: 10px;'>";
+                            html += "<strong>Title:</strong> " + (result.title || 'N/A') + "<br>";
+                            html += "<strong>Path:</strong> " + (result.path || 'N/A') + "<br>";
+                            html += "<strong>Score:</strong> " + (result.score || 'N/A') + "<br>";
+                            html += "<strong>Word Count:</strong> " + (result.wordCount || 'N/A') + "<br>";
+                            html += "<strong>Snippet:</strong> " + (result.snippet || 'No snippet available') + "<br>";
+                            
+                            // Analyze snippet content
+                            if (result.snippet) {
+                                var snippetLength = result.snippet.length;
+                                var hasHighlight = result.snippet.includes('<') || result.snippet.includes('[');
+                                html += "<small style='color: #666;'>Analysis: " + snippetLength + " chars";
+                                html += hasHighlight ? ", has markup/highlighting" : ", plain text";
+                                html += "</small>";
+                            }
+                            html += "</div>";
+                        }
+                    }
+                }
+                
+                html += "<hr>";
+                html += "<h3>🎯 Analysis Summary:</h3>";
+                
+                if (event2.data.error) {
+                    html += "<p>❌ <strong>Implementation Status:</strong> searchWithSnippets function failed</p>";
+                    html += "<p>🔧 <strong>Next Step:</strong> Check C++ bindings and compilation</p>";
+                } else if (snippetResults.length === 0) {
+                    html += "<p>⚠️ <strong>Implementation Status:</strong> Function exists but returns no results</p>";
+                    html += "<p>🔧 <strong>Next Step:</strong> Debug SearchIterator wrapper</p>";
+                } else {
+                    var hasRealSnippets = snippetResults.some(r => r.snippet && r.snippet.length > 0 && !r.snippet.match(/^(<b>.*<\/b>\s*)+$/));
+                    if (hasRealSnippets) {
+                        html += "<p>✅ <strong>Implementation Status:</strong> SUCCESS! Content snippets working</p>";
+                        html += "<p>🎉 <strong>Result:</strong> Proper search result snippets detected</p>";
+                    } else {
+                        html += "<p>⚠️ <strong>Implementation Status:</strong> Returning title-like content, not content snippets</p>";
+                        html += "<p>🔧 <strong>Next Step:</strong> Verify using SearchIterator.getSnippet() not title highlighting</p>";
+                    }
+                }
+                
+                html += "<p><strong>Expected snippet example:</strong> <em>\"...ray[5] (Old English rā,[8] Old Norse rā),[9] meaning \"roe deer\"...\"</em></p>";
+                
+                window.frames[0].document.body.innerHTML = html;
+                document.getElementById("status").textContent = "Debug analysis complete - check results below";
+            };
+            
+            worker.postMessage({action: "searchWithSnippets", text: text, numResults: 5}, [tmpMessageChannel2.port2]);
+        };
+        
+        worker.postMessage({action: "search", text: text, numResults: 5}, [tmpMessageChannel1.port2]);
+    }
+
     function callGetContentByPath() {
         var tmpMessageChannel = new MessageChannel();
         var path = document.getElementById("path").value;
@@ -125,6 +280,5 @@
         worker.postMessage({action: "getEntryByPath", path: path, follow: true}, [tmpMessageChannel.port2]);
     }
     </script>
-</body>
-      </html>
-
+    </body>
+</html>

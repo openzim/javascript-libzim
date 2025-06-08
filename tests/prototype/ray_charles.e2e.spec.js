@@ -89,7 +89,8 @@ function runTests (driver) {
             });
 
             // Click the btnCallSearch button and check the iframe contents contains 'A/Ray_Charles'
-            it('Search for "A/Ray_Charles" and check the iframe contents', async function () {
+            it('Search for "Ray" and check the iframe contents', async function () {
+                // Note that the search field is prepopulated with "Ray"
                 const btnCallSearch = await driver.findElement(By.id('btnCallSearch'));
                 await btnCallSearch.click();
                 await driver.sleep(1200);
@@ -98,6 +99,23 @@ function runTests (driver) {
                 // Get the contents of the body element by tag name
                 var body = await driver.executeScript('return document.getElementsByTagName("body")[0].innerHTML');
                 assert.ok(body.includes('A/Ray_Charles'));
+                // Switch back to main document
+                await driver.switchTo().defaultContent();
+            });
+
+            // Click the btnCallSuggest button and check the iframe contents contains 'Cosmic Ray'
+            it('Suggest for "Ray" and check the iframe contents contains "Cosmic Ray"', async function () {
+                // Wait for the button to be present before clicking
+                await driver.wait(until.elementLocated(By.id('btnCallSuggest')), 5000);
+                // Note that the suggest field is prepopulated with "Ray"
+                const btnCallSuggest = await driver.findElement(By.id('btnCallSuggest'));
+                await btnCallSuggest.click();
+                await driver.sleep(1200);
+                // Switch to the iframe named "iframeResult"
+                await driver.switchTo().frame('iframeResult');
+                // Get the contents of the body element by CSS selector
+                var body = await driver.executeScript('return document.querySelector("body").innerHTML');
+                assert.ok(body.includes('Cosmic Ray'));
                 // Switch back to main document
                 await driver.switchTo().defaultContent();
             });

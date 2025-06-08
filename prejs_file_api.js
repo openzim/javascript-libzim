@@ -1,8 +1,20 @@
+/**
+ * Web Worker API for libzim JavaScript bindings
+ * 
+ * This file provides the pre-JS portion of the web worker that handles ZIM file operations.
+ * It is concatenated with postjs_file_api.js during the Emscripten build process (see Makefile)
+ * to create a complete web worker script that can be used with WebAssembly or asm.js builds.
+ * 
+ * Supported actions: getEntryByPath, search, searchWithSnippets, suggest, getArticleCount, init
+ */
+
 self.addEventListener('message', function(e) {
     var action = e.data.action;
     var path = e.data.path;
     var outgoingMessagePort = e.ports[0];
     console.debug('WebWorker called with action=' + action);
+    
+    // Retrieve content from ZIM archive by path
     if (action === 'getEntryByPath') {
         var follow = e.data.follow;
         var entry = Module[action](path);
@@ -25,7 +37,8 @@ self.addEventListener('message', function(e) {
         else {
             outgoingMessagePort.postMessage({ content: new Uint8Array(), mimetype: 'unknown', isRedirect: false});
         }
-    }
+    } 
+    // Full-text search across ZIM archive content (basic version - paths only)
     else if (action === 'search') {
         var text = e.data.text;
         var numResults = e.data.numResults || 50;
@@ -37,11 +50,62 @@ self.addEventListener('message', function(e) {
             serializedEntries.push({path: entry.getPath()});
         }
         outgoingMessagePort.postMessage({ entries: serializedEntries });
-    }
+    } 
+    // NEW: Enhanced full-text search with content snippets
+    else if (action === 'searchWithSnippets') {
+        var text = e.data.text;
+        var numResults = e.data.numResults || 50;
+        try {
+            var searchResults = Module['searchWithSnippets'](text, numResults);
+            console.debug('Found nb search results with snippets = ' + searchResults.size(), searchResults);
+            var serializedResults = [];
+            for (var i=0; i<searchResults.size(); i++) {
+                var result = searchResults.get(i);
+                try {
+                    serializedResults.push({
+                        path: result.getPath(),
+                        title: result.getTitle(),
+                        snippet: result.getSnippet(),
+                        score: result.getScore(),
+                        wordCount: result.getWordCount()
+                    });
+                } catch (error) {
+                    console.warn('Error processing search result ' + i + ':', error);
+                    // Include basic info even if snippet extraction fails
+                    serializedResults.push({
+                        path: result.getPath() || '',
+                        title: result.getTitle() || '',
+                        snippet: '',
+                        score: 0,
+                        wordCount: 0
+                    });
+                }
+            }
+            outgoingMessagePort.postMessage({ results: serializedResults });
+        } catch (error) {
+            console.error('searchWithSnippets error:', error);
+            outgoingMessagePort.postMessage({ results: [], error: error.message });
+        }
+    } 
+    // Title-based suggestions for autocomplete (faster than full-text search)
+    else if (action === 'suggest') {
+        var text = e.data.text;
+        var numResults = e.data.numResults || 10;
+        var suggestions = Module[action](text, numResults);
+        console.debug('Found nb suggestions = ' + suggestions.size(), suggestions);
+        var serializedSuggestions = [];
+        for (var i=0; i<suggestions.size(); i++) {
+            var entry = suggestions.get(i);
+            serializedSuggestions.push({path: entry.getPath(), title: entry.getTitle()});
+        }
+        outgoingMessagePort.postMessage({ suggestions: serializedSuggestions });
+    } 
+    // Get total number of articles in the ZIM archive
     else if (action === 'getArticleCount') {
         var articleCount = Module[action]();
         outgoingMessagePort.postMessage(articleCount);
-    }
+    } 
+    // Initialize the ZIM archive with file system mounting
     else if (action === 'init') {
         var files = e.data.files;
         var assemblerType = e.data.assemblerType || 'runtime';
@@ -57,6 +121,7 @@ self.addEventListener('message', function(e) {
         for (let i = 0; i < files.length; i++) {
               Module['arguments'].push('/work/' + files[i].name);
         }
+        // Mount file system for ZIM file access (Electron vs browser environments)
         Module['preRun'] = function() {
             FS.mkdir('/work');
             if (files[0].readMode === 'electron') {
@@ -72,3 +137,6 @@ self.addEventListener('message', function(e) {
         };
         console.debug('baseZimFileName = ' + baseZimFileName);
         console.debug("Module['arguments'] = " + Module['arguments']);
+
+        // File continues in postjs_file_api.js - handles invalid actions and closes the event listener
+        // Between prejs and postjs: Emscripten injects the compiled WebAssembly/asm.js Module code and bindings
