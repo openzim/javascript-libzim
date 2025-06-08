@@ -7,9 +7,17 @@ WASM binary (`libzim.a`) from scratch, but from version 0.1, we have been using 
 ASM applications. Release packages can be obtained from [Releases](https://github.com/openzim/javascript-libzim/releases) or from
 https://download.openzim.org/release/javascript-libzim/.
 
+## Javascript Libzim v0.9 (2025-06-08)
+
+* Build W/ASM from libzim 9.3.0 source code (https://download.openzim.org/release/libzim/libzim-9.3.0.tar.xz)
+* TODO
+
 ## Javascript Libzim v0.8 (2025-05-31)
 
-TODO
+* Build W/ASM with libzim_wasm-emscripten v9.3.0-4 (https://download.openzim.org/release/libzim/libzim_wasm-emscripten-9.3.0-4.tar.gz)
+* Run nightly builds after kiwix-build by @Jaifroid in #83
+* Fix race condition in tests by @Jaifroid in #86
+* Add suggestions binding by @Jaifroid in #88
 
 ## Javascript Libzim v0.7 (2025-04-18)
 
