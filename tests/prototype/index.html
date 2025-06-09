@@ -91,11 +91,11 @@
         tmpMessageChannel.port1.onmessage = function(event2){
             var t1 = performance.now();
             var readTime = Math.round(t1 - t0);
-            var entries = event2.data.entries;
-            document.getElementById("status").textContent = "Search has found " + entries.length + " results";
+            var results = event2.data.results;
+            document.getElementById("status").textContent = "Search has found " + results.length + " results";
             var html = "";
-            for (var i=0; i<entries.length; i++) {
-                html += entries[i].path + "<br/>";
+            for (var i=0; i<results.length; i++) {
+                html += results[i].path + "<br/>";
             }
             window.frames[0].document.body.innerHTML = html;
             console.log("search done by the webworker in " + readTime + " milliseconds", event2);
@@ -168,7 +168,7 @@
         // Test basic search first
         var tmpMessageChannel1 = new MessageChannel();
         tmpMessageChannel1.port1.onmessage = function(event1) {
-            var basicResults = event1.data.entries;
+            var basicResults = event1.data.results;
             html += "<h3>1. Basic Search Results (" + basicResults.length + " found):</h3>";
             for (var i = 0; i < Math.min(3, basicResults.length); i++) {
                 html += "<div style='background: #f0f0f0; padding: 5px; margin: 5px;'>";
