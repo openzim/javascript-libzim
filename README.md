@@ -30,6 +30,14 @@ this Repository. This recipe needs to be run in an Emscripten-configured system 
 
 ## JavaScript API Bindings
 
+> **⚠️ API Stability Warning**
+> 
+> The JavaScript API documented below is considered **unstable** until the release of version 1.0 of javascript-libzim (currently on v0.x). Breaking changes may occur between minor versions.
+> 
+> Additionally, the built W/ASM packages in `tests/prototype/` may be ahead of official releases and may contain experimental alterations to the API that are not yet documented or finalized.
+> 
+> **Web Worker API:** For the messaging-based Web Worker API (used in the prototype), refer to [`prejs_file_api.js`](prejs_file_api.js) which serves as the Web Worker's header and documents the available actions and message formats.
+
 This section documents the JavaScript API bindings that are available after loading the compiled W/ASM module. The bindings provide access to libzim's core functionality including archive loading, content access, and search capabilities.
 
 ### Archive Management
