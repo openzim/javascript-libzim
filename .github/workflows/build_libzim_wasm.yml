@@ -49,7 +49,7 @@ env:
   DISPATCH_TYPE: ${{ github.event.inputs.buildtype }}
   LIBZIM_VERSION: ${{ github.event.inputs.libzim_version }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  SSH_KEY: ${{ secrets.SSH_KEY }}
+  UPLOAD_SSH_KEY: ${{ secrets.JAVASCRIPTLIBZIM_FILE_UPLOAD_KEY }}
   BUILD_TYPE: ${{ github.event.inputs.buildtype }}
 
 jobs:
@@ -124,8 +124,8 @@ jobs:
     - name: Zip the artefacts and upload to nightly
       if: github.event.schedule || github.event.inputs.buildtype == 'nightly'
       run: |
-        echo "$SSH_KEY" > ./scripts/ssh_key
-        chmod 600 ./scripts/ssh_key
+        echo "$UPLOAD_SSH_KEY" > ./scripts/upload_ssh_key
+        chmod 600 ./scripts/upload_ssh_key
         CURRENT_DATE=$(date +'%Y-%m-%d')
         target="/data/openzim/nightly/$CURRENT_DATE"
         zip libzim-javascript_wasm_$CURRENT_DATE.zip libzim-wasm.*
@@ -133,5 +133,5 @@ jobs:
         for FILE in "libzim-javascript_wasm_$CURRENT_DATE.zip" "libzim-javascript_asm_$CURRENT_DATE.zip"
         do
           echo "Copying $FILE to $target"
-          scp -P 30022 -o StrictHostKeyChecking=no -i ./scripts/ssh_key "$FILE" ci@master.download.kiwix.org:$target
+          scp -P 30322 -o StrictHostKeyChecking=no -i ./scripts/upload_ssh_key "$FILE" javascript-libzim@master.download.kiwix.org:$target
         done
