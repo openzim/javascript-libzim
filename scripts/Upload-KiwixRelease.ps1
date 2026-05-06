@@ -128,11 +128,11 @@ function Main {
         $releaseFiles | % {
             $filename = $_
             if ($dryrun) {
-                "[DRYRUN] C:\Program Files\Git\usr\bin\scp.exe -P 30022 -o StrictHostKeyChecking=no -i $keyfile $filename ci@${server}:$target"
+                "[DRYRUN] C:\Program Files\Git\usr\bin\scp.exe -P 30322 -o StrictHostKeyChecking=no -i $keyfile $filename javascript-libzim@${server}:$target"
                 Write-Warning "No file was uploaded because this is a dry run.`n"
             } else {
                 # Uploading file
-                & "C:\Program Files\Git\usr\bin\scp.exe" @('-P', '30022', '-o', 'StrictHostKeyChecking=no', '-i', "$keyfile", "$filename", "ci@${server}:$target")
+                & "C:\Program Files\Git\usr\bin\scp.exe" @('-P', '30322', '-o', 'StrictHostKeyChecking=no', '-i', "$keyfile", "$filename", "javascript-libzim@${server}:$target")
                 Write-Host "`nUploaded $filename to $server$target"
             }
         }

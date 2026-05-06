@@ -21,7 +21,7 @@ env:
   VERSION: ${{ github.event.release.tag_name }}
   DISPATCH_VERSION: ${{ github.event.inputs.version }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  SSH_KEY: ${{ secrets.SSH_KEY }}
+  UPLOAD_SSH_KEY: ${{ secrets.JAVASCRIPTLIBZIM_FILE_UPLOAD_KEY }}
 
 jobs:
   upload:
@@ -40,9 +40,9 @@ jobs:
           exit 1
         }
         echo "`nUsing tag: $version for version upload`n"
-        $SSH_KEY = $Env:SSH_KEY
-        if (! $SSH_KEY) {
+        $UPLOAD_SSH_KEY = $Env:UPLOAD_SSH_KEY
+        if (! $UPLOAD_SSH_KEY) {
           Write-Warning "The SSH secret is empty!"
         }
-        echo "$SSH_KEY" > .\scripts\ssh_key
+        echo "$UPLOAD_SSH_KEY" > .\scripts\upload_ssh_key
         ./scripts/Upload-KiwixRelease.ps1 -yes
