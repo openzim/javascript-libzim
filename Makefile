@@ -31,29 +31,33 @@ libzim_nightly:
 	cp -r libzim_wasm-emscripten-$$(date +'%Y-%m-%d')/lib/*.* build/lib/
 
 build/lib/liblzma.so : 
-	# Origin: https://tukaani.org/xz/xz-5.2.4.tar.gz
-	[ ! -f xz-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/xz-5.2.4.tar.gz || true
+	# Origin: https://tukaani.org/xz/xz-5.2.6.tar.gz
+	[ ! -f xz-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/xz-5.2.6.tar.gz || true
 	tar xf xz-*.tar.gz
-	cd xz-*/ ; ./autogen.sh
-	cd xz-*/ ; emconfigure ./configure --prefix=`pwd`/../build
-	cd xz-*/ ; emmake make 
-	cd xz-*/ ; emmake make install
+	# --no-po4a: xz >= 5.2.6 generates translated man pages in autogen.sh and
+	# exits non-zero if po4a is not installed. We don't need the man pages.
+	cd xz-5.2.6/ ; ./autogen.sh --no-po4a
+	cd xz-5.2.6/ ; emconfigure ./configure --prefix=`pwd`/../build
+	cd xz-5.2.6/ ; emmake make 
+	cd xz-5.2.6/ ; emmake make install
 	
 build/lib/libz.a :
-	# Version not yet available in dev.kiwix.org
-	wget -N https://zlib.net/zlib-1.3.1.tar.gz
+	# Origin: https://zlib.net/fossils/zlib-1.3.1.tar.gz
+	# Do not use the top-level zlib.net URL: it only serves the newest release and
+	# moves older ones to fossils/, so the download silently becomes an HTML page.
+	[ ! -f zlib-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/zlib-1.3.1.tar.gz || true
 	tar xf zlib-*.tar.gz
 	cd zlib-*/ ; emconfigure ./configure --prefix=`pwd`/../build
 	cd zlib-*/ ; emmake make
 	cd zlib-*/ ; emmake make install
 	
 build/lib/libzstd.a :
-	# Origin: https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz 
-	[ ! -f zstd-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/zstd-1.5.2.tar.gz || true
-	tar xf zstd-*.tar.gz
-	cd zstd-*/build/meson ; meson setup --cross-file=../../../emscripten-crosscompile.ini -Dbin_programs=false -Dbin_contrib=false -Dzlib=disabled -Dlzma=disabled -Dlz4=disabled --prefix=`pwd`/../../../build --libdir=lib builddir
-	cd zstd-*/build/meson/builddir ; ninja
-	cd zstd-*/build/meson/builddir ; ninja install
+	# Origin: https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz 
+	[ ! -f zstd-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/zstd-1.5.7.tar.gz || true
+	tar xf zstd-1.5.7.tar.gz
+	cd zstd-1.5.7/build/meson ; meson setup --cross-file=../../../emscripten-crosscompile.ini -Dbin_programs=false -Dbin_contrib=false -Dzlib=disabled -Dlzma=disabled -Dlz4=disabled --prefix=`pwd`/../../../build --libdir=lib builddir
+	cd zstd-1.5.7/build/meson/builddir ; ninja
+	cd zstd-1.5.7/build/meson/builddir ; ninja install
 	
 build/lib/libicudata.so : 
 	# Version not yet available in dev.kiwix.org
@@ -68,7 +72,7 @@ build/lib/libicudata.so :
 build/lib/libxapian.a : build/lib/libz.a
 	# Origin: https://oligarchy.co.uk/xapian/1.4.18/xapian-core-1.4.18.tar.xz
 	# Also: https://dev.kiwix.org/kiwix-build/xapian-core-1.4.23.tar.xz
-	[ ! -f xapian-*.tar.gz ] && wget -N https://oligarchy.co.uk/xapian/1.4.29/xapian-core-1.4.29.tar.xz || true
+	[ ! -f xapian-*.tar.xz ] && wget -N https://oligarchy.co.uk/xapian/1.4.29/xapian-core-1.4.29.tar.xz || true
 	tar xf xapian-core-*.tar.xz
         # Some options coming from https://github.com/xapian/xapian/tree/master/xapian-core/emscripten
 	# cd xapian-core-1.4.18; emconfigure ./configure --prefix=`pwd`/../build "CFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" "CXXFLAGS=-I`pwd`/../build/include -L`pwd`/../build/lib" CPPFLAGS='-DFLINTLOCK_USE_FLOCK' CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti' --disable-backend-honey --disable-backend-inmemory --disable-shared --disable-backend-remote
@@ -78,7 +82,7 @@ build/lib/libxapian.a : build/lib/libz.a
 
 build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a build/lib/libicudata.so build/lib/libxapian.a
 	# Download and extract libzim source
-	[ ! -f libzim-*.tar.xz ] && wget -N https://download.openzim.org/release/libzim/libzim-9.3.0.tar.xz || true
+	[ ! -f libzim-*.tar.xz ] && wget -N https://download.openzim.org/release/libzim/libzim-9.8.1.tar.xz || true
 	tar xf libzim-*.tar.xz
 	
 	@echo "=== APPLYING ESSENTIAL LIBZIM PATCHES ==="
@@ -93,21 +97,19 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	
 	# 3. CRITICAL FIX: Remove problematic bool exceptions from HTML parser
 	@echo "Applying HTML parser WASM fix..."
-	sed -i 's/throw true;/return;/g' libzim-9.3.0/src/xapian/myhtmlparse.cc
-	sed -i 's/throw newcharset;/return;/g' libzim-9.3.0/src/xapian/myhtmlparse.cc
+	sed -i 's/throw true;/return;/g' libzim-9.8.1/src/xapian/myhtmlparse.cc
+	sed -i 's/throw newcharset;/return;/g' libzim-9.8.1/src/xapian/myhtmlparse.cc
 	
 	# Verify patches applied correctly
 	@echo "Verification:"
 	@echo "  Headers added: $$(grep -c '#include <set>' libzim-*/src/search.cpp || echo '0')/2 files"
 	@echo "  Whitelists added: $$(grep -c 'supportedLangs' libzim-*/src/search.cpp || echo '0')/2 files"  
-	@echo "  Problematic throws removed: $$(grep -c 'throw.*true\|throw.*newcharset' libzim-9.3.0/src/xapian/myhtmlparse.cc || echo '0') (should be 0)"
+	@echo "  Problematic throws removed: $$(grep -c 'throw.*true\|throw.*newcharset' libzim-9.8.1/src/xapian/myhtmlparse.cc || echo '0') (should be 0)"
 	@echo "✅ Essential patches applied successfully"
 	
-	# Disable examples compilation (not needed for WASM)
-	sed -i -e "s/^subdir('examples')//" libzim-*/meson.build
-	
-	# Build libzim
-	cd libzim-*/ ; PKG_CONFIG_PATH=/src/build/lib/pkgconfig meson --prefix=`pwd`/../build --cross-file=../emscripten-crosscompile.ini . build -DUSE_MMAP=false
+	# Build libzim. Examples are not needed for WASM, hence -Dexamples=false.
+	# (Tests are skipped automatically: libzim gates them on `not meson.is_cross_build()`.)
+	cd libzim-*/ ; PKG_CONFIG_PATH=/src/build/lib/pkgconfig meson --prefix=`pwd`/../build --cross-file=../emscripten-crosscompile.ini . build -DUSE_MMAP=false -Dexamples=false
 	cd libzim-*/ ; ninja -C build
 	cd libzim-*/ ; ninja -C build install
 
