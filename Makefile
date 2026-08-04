@@ -78,7 +78,7 @@ build/lib/libxapian.a : build/lib/libz.a
 
 build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a build/lib/libicudata.so build/lib/libxapian.a
 	# Download and extract libzim source
-	[ ! -f libzim-*.tar.xz ] && wget -N https://download.openzim.org/release/libzim/libzim-9.3.0.tar.xz || true
+	[ ! -f libzim-*.tar.xz ] && wget -N https://download.openzim.org/release/libzim/libzim-9.8.1.tar.xz || true
 	tar xf libzim-*.tar.xz
 	
 	@echo "=== APPLYING ESSENTIAL LIBZIM PATCHES ==="
@@ -93,14 +93,14 @@ build/lib/libzim.a : build/lib/liblzma.so build/lib/libz.a build/lib/libzstd.a b
 	
 	# 3. CRITICAL FIX: Remove problematic bool exceptions from HTML parser
 	@echo "Applying HTML parser WASM fix..."
-	sed -i 's/throw true;/return;/g' libzim-9.3.0/src/xapian/myhtmlparse.cc
-	sed -i 's/throw newcharset;/return;/g' libzim-9.3.0/src/xapian/myhtmlparse.cc
+	sed -i 's/throw true;/return;/g' libzim-9.8.1/src/xapian/myhtmlparse.cc
+	sed -i 's/throw newcharset;/return;/g' libzim-9.8.1/src/xapian/myhtmlparse.cc
 	
 	# Verify patches applied correctly
 	@echo "Verification:"
 	@echo "  Headers added: $$(grep -c '#include <set>' libzim-*/src/search.cpp || echo '0')/2 files"
 	@echo "  Whitelists added: $$(grep -c 'supportedLangs' libzim-*/src/search.cpp || echo '0')/2 files"  
-	@echo "  Problematic throws removed: $$(grep -c 'throw.*true\|throw.*newcharset' libzim-9.3.0/src/xapian/myhtmlparse.cc || echo '0') (should be 0)"
+	@echo "  Problematic throws removed: $$(grep -c 'throw.*true\|throw.*newcharset' libzim-9.8.1/src/xapian/myhtmlparse.cc || echo '0') (should be 0)"
 	@echo "✅ Essential patches applied successfully"
 	
 	# Disable examples compilation (not needed for WASM)
