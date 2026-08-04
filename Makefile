@@ -31,13 +31,13 @@ libzim_nightly:
 	cp -r libzim_wasm-emscripten-$$(date +'%Y-%m-%d')/lib/*.* build/lib/
 
 build/lib/liblzma.so : 
-	# Origin: https://tukaani.org/xz/xz-5.2.4.tar.gz
-	[ ! -f xz-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/xz-5.2.4.tar.gz || true
+	# Origin: https://tukaani.org/xz/xz-5.2.6.tar.gz
+	[ ! -f xz-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/xz-5.2.6.tar.gz || true
 	tar xf xz-*.tar.gz
-	cd xz-*/ ; ./autogen.sh
-	cd xz-*/ ; emconfigure ./configure --prefix=`pwd`/../build
-	cd xz-*/ ; emmake make 
-	cd xz-*/ ; emmake make install
+	cd xz-5.2.6/ ; ./autogen.sh
+	cd xz-5.2.6/ ; emconfigure ./configure --prefix=`pwd`/../build
+	cd xz-5.2.6/ ; emmake make 
+	cd xz-5.2.6/ ; emmake make install
 	
 build/lib/libz.a :
 	# Version not yet available in dev.kiwix.org
@@ -48,12 +48,12 @@ build/lib/libz.a :
 	cd zlib-*/ ; emmake make install
 	
 build/lib/libzstd.a :
-	# Origin: https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz 
-	[ ! -f zstd-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/zstd-1.5.2.tar.gz || true
-	tar xf zstd-*.tar.gz
-	cd zstd-*/build/meson ; meson setup --cross-file=../../../emscripten-crosscompile.ini -Dbin_programs=false -Dbin_contrib=false -Dzlib=disabled -Dlzma=disabled -Dlz4=disabled --prefix=`pwd`/../../../build --libdir=lib builddir
-	cd zstd-*/build/meson/builddir ; ninja
-	cd zstd-*/build/meson/builddir ; ninja install
+	# Origin: https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz 
+	[ ! -f zstd-*.tar.gz ] && wget -N https://dev.kiwix.org/kiwix-build/zstd-1.5.7.tar.gz || true
+	tar xf zstd-1.5.7.tar.gz
+	cd zstd-1.5.7/build/meson ; meson setup --cross-file=../../../emscripten-crosscompile.ini -Dbin_programs=false -Dbin_contrib=false -Dzlib=disabled -Dlzma=disabled -Dlz4=disabled --prefix=`pwd`/../../../build --libdir=lib builddir
+	cd zstd-1.5.7/build/meson/builddir ; ninja
+	cd zstd-1.5.7/build/meson/builddir ; ninja install
 	
 build/lib/libicudata.so : 
 	# Version not yet available in dev.kiwix.org
