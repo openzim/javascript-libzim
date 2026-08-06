@@ -49,7 +49,7 @@ env:
   DISPATCH_TYPE: ${{ github.event.inputs.buildtype }}
   LIBZIM_VERSION: ${{ github.event.inputs.libzim_version }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  UPLOAD_SSH_KEY: ${{ secrets.JAVASCRIPTLIBZIM_FILE_UPLOAD_KEY }}
+  UPLOAD_SSH_KEY: ${{ secrets.KIWIX_FILE_UPLOAD_SSH_KEY }}
   BUILD_TYPE: ${{ github.event.inputs.buildtype }}
 
 jobs:
