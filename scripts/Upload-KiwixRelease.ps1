@@ -139,6 +139,7 @@ function Main {
         $keyfile = "$PSScriptRoot\upload_ssh_key"
         $keyfile = $keyfile -ireplace '[\\/]', '/'
         ""
+        $uploadFailed = $false
         $releaseFiles | % {
             $filename = $_
             if ($dryrun) {
@@ -147,8 +148,17 @@ function Main {
             } else {
                 # Uploading file
                 & "C:\Program Files\Git\usr\bin\scp.exe" @('-P', '30322', '-o', 'StrictHostKeyChecking=no', '-i', "$keyfile", "$filename", "javascript-libzim@${server}:$target")
-                Write-Host "`nUploaded $filename to $server$target"
+                # Don't claim success on scp's behalf: it reports transfer and auth failures by exit code
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Host "`nUploaded $filename to $server$target"
+                } else {
+                    Write-Host "`n** scp exited with code $LASTEXITCODE :" $filename "was NOT uploaded! **`n" -ForegroundColor Red
+                    $uploadFailed = $true
+                }
             }
+        }
+        if ($uploadFailed) {
+            exit 1
         }
     } else {
         # This shouldn't happen!
