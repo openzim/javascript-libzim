@@ -1,5 +1,5 @@
 # A script to find release assets and upload them to the Kiwix release server.
-# If run loaclly, you must ensure that the KIWIX_FILE_UPLOAD_SSH_KEY secret to access the release server is available in
+# If run locally, you must ensure that the KIWIX_FILE_UPLOAD_SSH_KEY secret to access the release server is available in
 # your File System, as scripts/upload_ssh_key (this is the file the workflow writes the secret to).
 # You should also provide the tag version as input to this script, or set the $version variable to an existing release tag.
 
