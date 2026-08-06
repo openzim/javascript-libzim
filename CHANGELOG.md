@@ -7,6 +7,18 @@ WASM binary (`libzim.a`) from scratch, but from version 0.1, we have been using 
 ASM applications. Release packages can be obtained from [Releases](https://github.com/openzim/javascript-libzim/releases) or from
 https://download.openzim.org/release/javascript-libzim/.
 
+## Javascript Libzim v0.95 (2026-08-05)
+
+* Build W/ASM from libzim 9.8.1 souce code (https://download.openzim.org/release/libzim/libzim_wasm-emscripten-9.8.1.tar.gz)
+* Make APIs for `search` and `searchWithSnippets` compatible
+* Update prototype with new search API builds
+* Add prominent warning about API instability
+* Update release and nightly uploads for new location
+* Extensively rework makefile to accommodate source build of latest libzim
+* Make source patching fail loudly
+* Correct languages whitelist for stemming module override
+* Security update for many dependencies
+
 ## Javascript Libzim v0.9 (2025-06-08)
 
 * Build W/ASM from libzim 9.3.0 source code (https://download.openzim.org/release/libzim/libzim-9.3.0.tar.xz)
