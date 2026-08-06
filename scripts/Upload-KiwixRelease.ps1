@@ -72,7 +72,7 @@ function Main {
         $release.assets | % {
             $asset = $_
             if ($asset.name -imatch $rgxAssetMatch) {
-                $assetUrl = $asset.url + "/" + $asset.name
+                $assetUrl = $asset.browser_download_url
                 $releaseAssets += $asset
                 Write-Host "Found asset $assetUrl!" -ForegroundColor Green
             }
@@ -89,14 +89,27 @@ function Main {
         $releaseAssets | % {
             $asset = $_
             if (! $dryrun) {
-                Invoke-WebRequest $asset.url -OutFile $asset.name
+                # NB the Accept header is essential: without it, the API returns the asset's JSON
+                # metadata instead of the binary, and we would upload that in place of the archive
+                $asset_params = @{
+                    Uri = $asset.url
+                    OutFile = $asset.name
+                    Headers = @{ 'Accept' = 'application/octet-stream' }
+                }
+                Invoke-WebRequest @asset_params
             }
-            if ((Test-Path $asset.name -PathType leaf) -or $dryrun) {
+            # Check we got the whole binary, not an error page or the asset's JSON metadata
+            $downloaded = $null
+            if (Test-Path $asset.name -PathType leaf) { $downloaded = Get-Item $asset.name }
+            if (($downloaded -and ($downloaded.Length -eq $asset.size)) -or $dryrun) {
                 if ($dryrun) { "[DRYRUN]:"}
                 Write-Host "`n* Downloaded asset" $asset.name "to local file system..." -ForegroundColor Green
                 $releaseFiles += $asset.name # Store the filename to access when we upload
             } else {
-                Write-Host "`n** The file" $asset.name "does not appear to have downloaded correctly! **`n" -ForegroundColor Red
+                Write-Host "`n** The file" $asset.name "does not appear to have downloaded correctly! **" -ForegroundColor Red
+                if ($downloaded) {
+                    Write-Host "** Expected" $asset.size "bytes, but got" $downloaded.Length "bytes **`n" -ForegroundColor Red
+                }
                 $errorFlag = $true
             }
         }
