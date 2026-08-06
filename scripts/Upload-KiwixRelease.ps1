@@ -1,5 +1,6 @@
 # A script to find release assets and upload them to the Kiwix release server.
-# If run loaclly, you must ensure that the SSH_KEY secret to access the release server is available in your File System.
+# If run locally, you must ensure that the KIWIX_FILE_UPLOAD_SSH_KEY secret to access the release server is available in
+# your File System, as scripts/upload_ssh_key (this is the file the workflow writes the secret to).
 # You should also provide the tag version as input to this script, or set the $version variable to an existing release tag.
 
 param (
@@ -135,7 +136,7 @@ function Main {
             }
         }
         # Load the secret
-        $keyfile = "$PSScriptRoot\ssh_key"
+        $keyfile = "$PSScriptRoot\upload_ssh_key"
         $keyfile = $keyfile -ireplace '[\\/]', '/'
         ""
         $releaseFiles | % {

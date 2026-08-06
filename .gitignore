@@ -16,5 +16,6 @@
 /libzim_wasm-*.tar.gz
 /large_file_*
 ssh_key
+upload_ssh_key
 github_token
 /node_modules/
