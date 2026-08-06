@@ -21,9 +21,8 @@ env:
   VERSION: ${{ github.event.release.tag_name }}
   DISPATCH_VERSION: ${{ github.event.inputs.version }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  # Reverted to the repo-level secret: the org-level KIWIX_FILE_UPLOAD_SSH_KEY as currently stored
-  # fails to parse ("error in libcrypto: unsupported"), so no upload can authenticate with it.
-  # Switch back to secrets.KIWIX_FILE_UPLOAD_SSH_KEY once the org secret has been re-stored (#101).
+  # Repo-level by design: since the April 2026 infra change the download server uses a
+  # per-repository username and key, so there is deliberately no org-wide equivalent (#101).
   UPLOAD_SSH_KEY: ${{ secrets.JAVASCRIPTLIBZIM_FILE_UPLOAD_KEY }}
 
 jobs:
