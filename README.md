@@ -2,7 +2,8 @@
 
 This Repository provides the source code and utilities for compiling the [ZIM File](https://wiki.openzim.org/wiki/ZIM_file_format) reader
 [lbizim](https://wiki.openzim.org/wiki/Libzim) from C++ to [WebAssembly](https://developer.mozilla.org/en-US/docs/WebAssembly)
-(and [ASM.js](https://developer.mozilla.org/en-US/docs/Games/Tools/asm.js)).
+(and [ASM.js](https://developer.mozilla.org/en-US/docs/Games/Tools/asm.js)). Only the reading capabilities of libzim are cureently compiled,
+as the compioled binary is intended for use in JavaScript ZIM reader clients.
 
 A prototype in HTML/JS, for testing the WASM version, is provided at https://openzim.github.io/javascript-libzim/tests/prototype/. This
 prototype uses WORKERFS as the Emscripten File System and runs in a Web Worker. The file object is mounted before run, and the name is
