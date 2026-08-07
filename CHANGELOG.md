@@ -7,6 +7,11 @@ WASM binary (`libzim.a`) from scratch, but from version 0.1, we have been using 
 ASM applications. Release packages can be obtained from [Releases](https://github.com/openzim/javascript-libzim/releases) or from
 https://download.openzim.org/release/javascript-libzim/.
 
+## Unreleased
+
+* Revert the v0.95 migration to the org-level `KIWIX_FILE_UPLOAD_SSH_KEY` secret, since openZIM now authenticates each project with a per-repository username and key
+* Fail the release upload when `scp` does, instead of reporting every file as uploaded regardless of its exit code
+
 ## Javascript Libzim v0.95 (2026-08-06)
 
 * Build W/ASM from libzim 9.8.1 souce code (https://download.openzim.org/release/libzim/libzim_wasm-emscripten-9.8.1.tar.gz)
