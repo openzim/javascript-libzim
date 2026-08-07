@@ -9,7 +9,7 @@ https://download.openzim.org/release/javascript-libzim/.
 
 ## Unreleased
 
-* Revert the v0.95 migration to the org-level `KIWIX_FILE_UPLOAD_SSH_KEY` secret: openZIM authenticates each project with a per-repository username and key, so that secret has since been removed upstream and uploads use the repo-level `JAVASCRIPTLIBZIM_FILE_UPLOAD_KEY` instead
+* Revert the v0.95 migration to the org-level `KIWIX_FILE_UPLOAD_SSH_KEY` secret, since openZIM now authenticates each project with a per-repository username and key
 * Fail the release upload when `scp` does, instead of reporting every file as uploaded regardless of its exit code
 
 ## Javascript Libzim v0.95 (2026-08-06)
