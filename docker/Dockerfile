@@ -3,7 +3,8 @@ ARG VERSION
 FROM emscripten/emsdk:${VERSION}
 
 # Install build tools
-RUN apt-get update && apt-get install -y --no-install-recommends wget ninja-build pkg-config python3 autopoint libtool autoconf patch g++ locales curl git \
+RUN sed -i 's|http://archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g; s|http://security.ubuntu.com/ubuntu|https://security.ubuntu.com/ubuntu|g' /etc/apt/sources.list \
+	&& apt-get update && apt-get install -y --no-install-recommends wget ninja-build pkg-config python3 autopoint libtool autoconf patch g++ locales curl git \
 # The following packages are needed for meson build, even if they are unused for compilation
 	zlib1g-dev libicu-dev libxapian-dev liblzma-dev libcurl4-openssl-dev \
 # To avoid the error 'aclocal not found', we have to install automake
